@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Description Expand
 // @description     Expand YouTube description section
-// @version         1.0
+// @version         1.1
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
 // @compatible      firefox
