@@ -5,7 +5,6 @@
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
 // @compatible      firefox
-// @run-at          document-idle
 // ==/UserScript==
 
 
