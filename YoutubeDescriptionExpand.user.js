@@ -3,7 +3,7 @@
 // @description     Expand YouTube description section
 // @version         1.0
 // @namespace       https://git.tbp.land/
-// @match           *://*youtube.com/watch*
+// @match           *://*.youtube.com/watch*
 // @compatible      firefox
 // @run-at          document-idle
 // ==/UserScript==
