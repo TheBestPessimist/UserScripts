@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Description Expand
 // @description     Expand YouTube description section
-// @version         1.1
+// @version         1.2
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
