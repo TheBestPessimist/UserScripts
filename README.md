@@ -10,4 +10,4 @@ View more information about a particular script by clicking on its name.
 
 | Name | Links | |
 | ---- | :---: | :---: |
-| YouTube Description Autoexpand | [Info](youtube-description-autoexpand/README.md) | [Install](../../raw/master/youtube-description-autoexpand/youtube-description-autoexpand.user.js) |
+| YouTube Description Autoexpand | [Info](youtube-description-autoexpand/) | [Install](../../raw/master/youtube-description-autoexpand/youtube-description-autoexpand.user.js) |
