@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name            YouTube Description Expand
+// @name            YouTube Description Autoexpand
 // @description     Expand YouTube description section automatically
 // @version         1.3
 // @author          TheBestPessimist
@@ -17,7 +17,7 @@ const util = {
 };
 
 
-const SCRIPT_NAME = 'YouTube Description Expand';
+const SCRIPT_NAME = 'YouTube Description Autoexpand';
 
 const showMoreButtonId = '#meta ytd-expander>paper-button#more';
 
