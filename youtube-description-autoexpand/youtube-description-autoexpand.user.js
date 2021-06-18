@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name            YouTube Description Autoexpand
 // @description     Expand YouTube description section automatically
-// @version         1.4
+// @version         1.4.1
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
-// @compatible      firefox
 // @require         https://gitcdn.xyz/repo/fuzetsu/userscripts/b38eabf72c20fa3cf7da84ecd2cefe0d4a2116be/wait-for-elements/wait-for-elements.js
 // ==/UserScript==
 /**
