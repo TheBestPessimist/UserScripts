@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Description Autoexpand
 // @description     Expand YouTube description section automatically
-// @version         1.4.2
+// @version         1.4.4
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
@@ -21,13 +21,25 @@ const SCRIPT_NAME = 'YouTube Description Autoexpand';
 const showMoreButtonId = '#more > yt-formatted-string';
 
 
-waitForElems({
-    sel: showMoreButtonId,
-    onmatch: btn => {
-        util.log('Expanding video description.');
-        console.log('begin debug');
-        console.log(btn);
-        console.log('end debug');
-        btn.click();
+waitForUrl(
+    () => true, // match any url
+    () => {
+        // Need a timeout here, otherwise the function will run for the old link.
+        // Not sure why, but it looks as if the html is not yet changed even though the url is.
+        setTimeout(
+            () => waitForElems({
+                sel: showMoreButtonId,
+                onmatch: expand,
+            }),
+            1000
+        )
     }
-});
+)
+
+function expand(btn) {
+    util.log('Expanding video description.');
+    util.log('begin debug');
+    util.log(btn);
+    btn.click();
+    util.log('end debug');
+}
