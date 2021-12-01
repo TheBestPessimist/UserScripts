@@ -8,6 +8,7 @@ View more information about a particular script by clicking on its name.
 
 ### Scripts
 
-| Name | Links | |
-| ---- | :---: | :---: |
-| YouTube Description Autoexpand | [Info](youtube-description-autoexpand/) | [Install](../../raw/master/youtube-description-autoexpand/youtube-description-autoexpand.user.js) |
+| Name |                  Links                  |                                                                                                     |
+| ---- |:---------------------------------------:|:---------------------------------------------------------------------------------------------------:|
+| YouTube Description Autoexpand | [Info](youtube-description-autoexpand/) |  [Install](../../raw/master/youtube-description-autoexpand/youtube-description-autoexpand.user.js)  |
+| YouTube Description Autoexpand |      [Info](youtube-auto-dislike/)      | [Install](../../raw/master/youtube-auto-dislike/youtube-auto-dislikedescription-autoexpand.user.js) |
