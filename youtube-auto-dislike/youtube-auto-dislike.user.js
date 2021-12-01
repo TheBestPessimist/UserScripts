@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            YouTube Auto Dislike
-// @description     Dislike every YouTube video. This is my rebuttal for YouTube disabling the Dislike count.
+// @description     Dislike every YouTube video. This is my rebuttal for YouTube hiding the Dislike count.
 // @version         1.0.0
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/

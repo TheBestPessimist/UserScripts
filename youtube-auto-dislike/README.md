@@ -1,3 +1,3 @@
-# YouTube Description Autoexpand
+# YouTube Auto Dislike
 
-Dislike every YouTube video. This is my rebuttal for YouTube disabling the Dislike count.
+Dislike every YouTube video. This is my rebuttal for YouTube hiding the Dislike count.
