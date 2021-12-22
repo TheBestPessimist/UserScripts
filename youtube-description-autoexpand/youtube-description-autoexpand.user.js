@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name            YouTube Description Autoexpand
 // @description     Expand YouTube description section automatically
-// @version         1.4.4
+// @version         1.4.5
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
-// @require         https://ghcdn.rawgit.org/fuzetsu/userscripts/3d35399f95c3b6796210f5594bcbf243297f8f96/wait-for-elements/wait-for-elements.js
+// @require         https://raw.githubusercontent.com/fuzetsu/userscripts/master/wait-for-elements/wait-for-elements.js
 // ==/UserScript==
 /**
  * Note: Using the function `waitForElems` from the required library above

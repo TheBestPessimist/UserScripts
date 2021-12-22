@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name            YouTube Auto Dislike
 // @description     Dislike every YouTube video. This is my rebuttal for YouTube hiding the Dislike count.
-// @version         1.0.0
+// @version         1.0.1
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
-// @require         https://ghcdn.rawgit.org/fuzetsu/userscripts/3d35399f95c3b6796210f5594bcbf243297f8f96/wait-for-elements/wait-for-elements.js
+// @require         https://raw.githubusercontent.com/fuzetsu/userscripts/master/wait-for-elements/wait-for-elements.js
 // ==/UserScript==
 /**
  * Note: Using the function `waitForElems` from the required library above
