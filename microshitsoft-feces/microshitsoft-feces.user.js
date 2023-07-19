@@ -8,6 +8,12 @@
 // @require https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // ==/UserScript==
 
+/*
+Documentation for the required userscript:
+- https://violentmonkey.github.io/guide/observing-dom/
+- https://violentmonkey.github.io/vm-dom/functions/observe.html
+ */
+
 const TITLE_CLASS = ".teams-title"
 
 VM.observe(document.body, () => {
