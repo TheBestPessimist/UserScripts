@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Description Autoexpand
 // @description     Expand YouTube description section automatically
-// @version         1.4.8
+// @version         1.4.9
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
@@ -17,7 +17,7 @@ const util = {
 
 const SCRIPT_NAME = 'YouTube Description Autoexpand';
 
-const showMoreButtonId = '#tp-yt-paper-button#expand';
+const showMoreButtonId = 'tp-yt-paper-button#expand';
 
 waitForUrl(
     () => true, // match any url
