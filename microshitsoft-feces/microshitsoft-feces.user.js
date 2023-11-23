@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Microshitsoft Feces
 // @description     Set the correct name for that fucking abomination which I am forced to use
-// @version         0.0.0.0.0.1
+// @version         0.0.0.0.0.2
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.teams.microsoft.com/*
@@ -14,16 +14,10 @@ Documentation for the required userscript:
 - https://violentmonkey.github.io/vm-dom/functions/observe.html
  */
 
-const TITLE_CLASS = ".teams-title"
+const DOWNLOAD_THE_FUCKING_APP_CLASS = "#downloadDesktopClient"
 
 VM.observe(document.body, () => {
     // Find the target node
-    const node = document.querySelector(TITLE_CLASS);
-
-    if (node) {
-        node.textContent = "Microshitsoft Feces"
-
-        // disconnect observer
-        return true;
-    }
+    const node = document.querySelector(DOWNLOAD_THE_FUCKING_APP_CLASS);
+    node.remove()
 });
