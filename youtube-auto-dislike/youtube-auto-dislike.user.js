@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Auto Dislike
 // @description     Dislike every YouTube video. This is my rebuttal for YouTube hiding the Dislike count.
-// @version         1.0.2
+// @version         1.0.3
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
@@ -24,9 +24,9 @@ const util = {
 const SCRIPT_NAME = "YouTube Auto Dislike";
 
 const CSS = {
-    dislike: "#above-the-fold #menu #segmented-dislike-button .yt-spec-button-shape-next",
-    likeButtonClicked: '#above-the-fold #menu #segmented-like-button .yt-spec-button-shape-next[aria-pressed="true"]',
-    dislikeButtonClicked: '#above-the-fold #menu #segmented-dislike-button .yt-spec-button-shape-next[aria-pressed="true"]',
+    dislike: "#above-the-fold #menu dislike-button-view-model button",
+    likeButtonClicked: '#above-the-fold #menu like-button-view-model button[aria-pressed="true"]',
+    dislikeButtonClicked: '#above-the-fold #menu dislike-button-view-model button[aria-pressed="true"]',
 }
 
 waitForUrl(
