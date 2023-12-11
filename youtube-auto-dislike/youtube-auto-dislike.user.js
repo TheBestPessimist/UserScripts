@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            YouTube Auto Dislike
 // @description     Dislike every YouTube video. This is my rebuttal for YouTube hiding the Dislike count.
-// @version         1.0.3
+// @version         1.0.4
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
@@ -29,23 +29,13 @@ const CSS = {
     dislikeButtonClicked: '#above-the-fold #menu dislike-button-view-model button[aria-pressed="true"]',
 }
 
-waitForUrl(
-    () => true, // match any url
-    () => {
-        // Need a timeout here, otherwise the function will run for the old link.
-        // Not sure why, but it looks as if the html is not yet changed even though the url is.
-        setTimeout(
-            () => waitForElems({
-                sel: CSS.dislike,
-                onmatch: dislike,
-            }),
-            1000
-        )
-    }
-)
+waitForElems({
+    sel: CSS.dislike,
+    onmatch: dislike,
+    throttle: 1000
+})
 
-
-function dislike(btn) {
+function dislike() {
     util.log("begin debug");
 
     const dislikeButton = document.querySelector(CSS.dislike);
