@@ -24,28 +24,44 @@ const util = {
 const SCRIPT_NAME = "YouTube Auto Dislike";
 
 const CSS = {
-    dislike: "#above-the-fold #menu dislike-button-view-model button",
-    likeButtonClicked: '#above-the-fold #menu like-button-view-model button[aria-pressed="true"]',
-    dislikeButtonClicked: '#above-the-fold #menu dislike-button-view-model button[aria-pressed="true"]',
+    likeButton: '#above-the-fold #menu like-button-view-model button',
+    dislikeButton: '#above-the-fold #menu dislike-button-view-model button',
 }
 
 waitForElems({
-    sel: CSS.dislike,
+    sel: CSS.dislikeButton,
     onmatch: dislike,
-    throttle: 5000
+    throttle: 10
 })
 
-function dislike() {
-    const dislikeButton = document.querySelector(CSS.dislike);
-    const likeButtonClicked = document.querySelector(CSS.likeButtonClicked);
-    const dislikeButtonClicked = document.querySelector(CSS.dislikeButtonClicked);
+async function dislike() {
+    util.log("before sleep");
+    // need to wait here a little for the elements to load. how do i do that besides a sleep?
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    util.log("dislike button (next line should not be null):");
+    const likeButton = document.querySelector(CSS.likeButton);
+    const dislikeButton = document.querySelector(CSS.dislikeButton);
+
+    /*
+     FUCK JAVASCRIPT
+     FUCK YOU WHOEVER INVENTED TRUTHY AND FALSY
+     FUCK YOU WHOEVER THINGS IF NORMAL TO NOT HAVE TRUE AND FALSE AS PROPER TYPES BUT AS STRINGS
+     FUCK YOU
+     FUCK YOU
+     FUCK YOU
+     FUCKING FUCK YOU, YOU FUCKING GARBAGE LANGUAGE
+     WHAT THE FUCKING FUCK IS FUCKING `=== 'true'`??? WHY NOT SIMPLY `== true` LIKE ANY FUCKING SANE LANGUAGE DOES?
+     FUCK YOU
+     FUCK YOU WHOEVER THINKS FUCKING `== 'true'`, `=== 'true'`, `== true`, `=== true` IS RIGHT
+     ALL THIS FUCKING SHIT IS RETARDED
+     */
+    const likeButtonClicked = likeButton.ariaPressed == 'true'
+    const dislikeButtonClicked = dislikeButton.ariaPressed == 'true'
+
+    util.log(`like button already clicked: ${likeButtonClicked}`);
+    util.log(likeButton);
+    util.log(`dislike button already clicked: ${dislikeButtonClicked}`);
     util.log(dislikeButton);
-    util.log(`like button already clicked: ${likeButtonClicked != null}`);
-    util.log(likeButtonClicked);
-    util.log(`dislike button already clicked: ${dislikeButtonClicked != null}`);
-    util.log(dislikeButtonClicked);
 
     if (likeButtonClicked) {
         util.log("Video is Liked by user. Will not dislike. => Nothing to do here.");
