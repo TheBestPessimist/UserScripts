@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Video Playback Speed
 // @description  Change video playback speed with keys `[`, `]`, `\`
-// @version      1.0.0
+// @version      1.0.1
 // @author       TheBestPessimist
 // @run-at       document-end
 // @namespace    https://git.tbp.land/
@@ -17,32 +17,36 @@
 
 
 const vsc = {
-    name:     "Video Speed Controller",
-    getvideo: _ => document.querySelector("video"), // Yep, it's really that simple.
-    rates:    [0.25, 0.5, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 8, 16],
-    selrate:  2,
-    ev_keydown: function(ev) {
-        let change = 0;
+    name: "Video Playback Speed",
+    log: (...args) => console.log(`%c${vsc.name}:`, "font-weight: bold;color: orange;", ...args),
+    getVideo: _ => document.querySelector("video"), // Yep, it's really that simple.
+    changeValue: 1.1,
+    ev_keydown: function (ev) {
+        let currentSpeed = vsc.getVideo().playbackRate
+        let newSpeed = 0
 
-        if (vsc.getvideo() === null)
+        if (vsc.getVideo() === null)
             return true;
 
+        // increase
         if (ev.key === "]")
-            change = +1;
+            newSpeed = currentSpeed * vsc.changeValue;
 
+        // decrease
         if (ev.key === "[")
-            change = -1;
+            newSpeed = currentSpeed * (1 / vsc.changeValue);
 
+        // reset
         if (ev.key === "\\")
-            change = -(vsc.selrate - 2);
+            newSpeed = 1;
 
-        vsc.selrate = (vsc.rates.length + vsc.selrate + change) % vsc.rates.length;
-        vsc.getvideo().playbackRate = vsc.rates[vsc.selrate];
-        console.log(`[${vsc.name}] Speed set to ${vsc.rates[vsc.selrate]}`);
+        // i like pretty numbers :^)
+        newSpeed = newSpeed.toFixed(2)
+
+        vsc.log(`Speed: ${currentSpeed} -> ${newSpeed}`);
+        vsc.getVideo().playbackRate = newSpeed;
     }
 };
 
-
 document.body.addEventListener("keydown", vsc.ev_keydown);
-console.clear();
-console.log(`[${vsc.name}] loaded`);
+vsc.log(`loaded`);
