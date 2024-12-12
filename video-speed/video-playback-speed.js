@@ -46,8 +46,10 @@ const vsc = {
         // youtube gives errors for anything outside this range
         newSpeed = clamp(newSpeed, 0.1, 15)
 
-        vsc.log(`Speed: ${currentSpeed} -> ${newSpeed}`);
-        vsc.getVideo().playbackRate = newSpeed;
+        if (newSpeed !== currentSpeed) {
+            vsc.log(`Speed: ${currentSpeed} -> ${newSpeed}`);
+            vsc.getVideo().playbackRate = newSpeed;
+        }
     }
 };
 
