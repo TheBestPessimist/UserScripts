@@ -1,16 +1,12 @@
 // ==UserScript==
 // @name         Video Playback Speed
 // @description  Change video playback speed with keys `[`, `]`, `\`
-// @version      1.0.3
+// @version      1.0.4
 // @author       TheBestPessimist
 // @run-at       document-end
 // @namespace    https://git.tbp.land/
 // @grant        none
 //
-// @match        *://*.youtube.com/*
-// @match        *://youtube.com/*
-// @match        *://*.vimeo.com/*
-// @match        *://vimeo.com/*
 // ==/UserScript==
 
 // Code taken from: https://greasyfork.org/en/scripts/30506-video-speed-buttons
@@ -22,7 +18,7 @@ const vsc = {
     changeValue: 1.1,
     ev_keydown: function (ev) {
         let currentSpeed = vsc.getVideo().playbackRate;
-        let newSpeed = 1;
+        let newSpeed = currentSpeed;
         let speedDirectionEmoji = "";
 
         if (vsc.getVideo() === null)
@@ -35,16 +31,17 @@ const vsc = {
         }
 
         // decrease
-        if (ev.key === "[") {
+        else if (ev.key === "[") {
             newSpeed = currentSpeed * (1 / vsc.changeValue);
             speedDirectionEmoji = "↘️";
         }
 
         // reset
-        if (ev.key === "\\") {
+        else  if (ev.key === "\\") {
             newSpeed = 1;
-            speedDirectionEmoji = "➡️"
+            speedDirectionEmoji = "▶️"
         }
+        else return true;
 
         // youtube gives errors for anything outside this range
         newSpeed = clamp(newSpeed, 0.1, 15)
@@ -82,14 +79,15 @@ function displayMessageOverElement(element, message) {
     // Style the message div
     Object.assign(messageDiv.style, {
         position: 'absolute',
-        top: `${rect.top + window.scrollY + 10}px`, // Add 10px offset
-        left: `${rect.left + window.scrollX + 10}px`, // Add 10px offset
-        backgroundColor: 'orange', // Customize appearance
+        top: `${rect.top + window.scrollY + 10}px`,
+        left: `${rect.left + window.scrollX + 10}px`,
+        backgroundColor: 'orange',
         // color: 'black',
+        'font-size': '20px',
         padding: '5px',
         // border: '1px solid black',
         borderRadius: '5px',
-        zIndex: 1000, // Ensure it appears above other elements
+        zIndex: 10_000, // Ensure it appears above other elements
         pointerEvents: 'none', // Prevent interaction with the message
     });
 
