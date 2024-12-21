@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Video Playback Speed
 // @description  Change video playback speed with keys `[`, `]`, `\`
-// @version      1.0.6
+// @version      1.0.7
 // @author       TheBestPessimist
 // @run-at       document-end
 // @namespace    https://git.tbp.land/
@@ -15,33 +15,35 @@
 const vsc = {
     name: "Video Playback Speed",
     getVideo: _ => document.querySelector("video"), // Yep, it's really that simple.
-    changeValue: 1.1,
     ev_keydown: function (ev) {
         let currentSpeed = vsc.getVideo().playbackRate;
         let newSpeed = currentSpeed;
         let speedDirectionEmoji = "";
+
+        let changeValue = 1.1;
+        if (currentSpeed >= 1 && currentSpeed < 2)
+            changeValue = 1.2;
 
         if (vsc.getVideo() === null)
             return true;
 
         // increase
         if (ev.key === "]") {
-            newSpeed = currentSpeed * vsc.changeValue;
+            newSpeed = currentSpeed * changeValue;
             speedDirectionEmoji = "↗️";
         }
 
         // decrease
         else if (ev.key === "[") {
-            newSpeed = currentSpeed * (1 / vsc.changeValue);
+            newSpeed = currentSpeed * (1 / changeValue);
             speedDirectionEmoji = "↘️";
         }
 
         // reset
-        else  if (ev.key === "\\") {
+        else if (ev.key === "\\") {
             newSpeed = 1;
             speedDirectionEmoji = "▶️"
-        }
-        else return true;
+        } else return true;
 
         // youtube gives errors for anything outside this range
         newSpeed = clamp(newSpeed, 0.1, 15)
