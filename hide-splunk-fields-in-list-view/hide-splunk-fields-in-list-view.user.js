@@ -4,7 +4,7 @@
 // @namespace    https://git.tbp.land/
 // @author       TheBestPessimist
 // @match        https://splunk.hydra-splunk.aws.platform.*/*
-// @version      1.5
+// @version      1.6
 // @grant        none
 // @run-at       document-end
 //
@@ -14,6 +14,7 @@
     'use strict';
 
     const textsToRemove = [ //
+        "@timestamp",
         "@version",
         "auditID",
         "eventId",
