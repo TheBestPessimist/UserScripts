@@ -4,7 +4,7 @@
 // @namespace    https://git.tbp.land/
 // @author       TheBestPessimist
 // @match        https://splunk.hydra-splunk.aws.platform.*/*
-// @version      1.3
+// @version      1.4
 // @grant        none
 // @run-at       document-end
 //
@@ -13,7 +13,20 @@
 (function () {
     'use strict';
 
-    const textsToRemove = ["@version", "level_value", "logtag", "stream", "auditID", "kind", "eventId", "host", "index", "kubernetes.annotations.CapacityProvisioned", "kubernetes.annotations.Logging"];
+    const textsToRemove = [ //
+        "@version",
+        "auditID",
+        "eventId",
+        "host",
+        "index",
+        "kind",
+        "kubernetes.annotations.CapacityProvisioned",
+        "kubernetes.annotations.Logging",
+        "level_value",
+        "log",
+        "logtag",
+        "stream",
+    ];
 
     const removeSpans = (node) => {
         const spans = node.querySelectorAll('span.key-name');
