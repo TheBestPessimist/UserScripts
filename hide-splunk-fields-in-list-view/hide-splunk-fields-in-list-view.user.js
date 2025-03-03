@@ -4,7 +4,7 @@
 // @namespace    https://git.tbp.land/
 // @author       TheBestPessimist
 // @match        https://splunk.hydra-splunk.aws.platform.*/*
-// @version      1.6
+// @version      1.7
 // @grant        none
 // @run-at       document-end
 //
@@ -21,8 +21,7 @@
         "host",
         "index",
         "kind",
-        "kubernetes.annotations.CapacityProvisioned",
-        "kubernetes.annotations.Logging",
+        "kubernetes",
         "level_value",
         "log",
         "logtag",
