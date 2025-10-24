@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Video URL Grabber (Transparent Button)
+// @name         Video URL Grabber (iFrame Fix)
 // @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.1
-// @description  Finds and copies video URLs, including HLS (.m3u8) and DASH (.mpd) streaming manifests found via network monitoring.
+// @version      3.2
+// @description  Finds video URLs (incl. m3u8/mpd) by network scan. Only runs on the main page, not in iframes.
 // @author       Fixed by Gemini
 // @match        *://*/*
 // @grant        GM_addStyle
@@ -11,6 +11,13 @@
 
 (function() {
     'use strict';
+
+    // --- THE FIX ---
+    // If we are inside an iframe, do nothing and exit.
+    // This prevents the script from adding a button inside the video player.
+    if (window.self !== window.top) {
+        return;
+    }
 
     // --- 1. A Set to store all found URLs (prevents duplicates) ---
     const foundUrls = new Set();
@@ -47,30 +54,29 @@
 
     GM_addStyle(`
         #vlg-grab-button {
-            position: fixed;   /* This is better than 'absolute' as it stays on screen when you scroll */
+            position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 99998;
-            background: transparent; /* 1. Made background transparent */
-            color: initial;          /* Use default emoji color */
+            background: transparent;
+            color: initial;
             border: none;
             border-radius: 50%;
             width: 50px;
             height: 50px;
             font-size: 24px;
             cursor: pointer;
-            box-shadow: none;        /* 1. Removed button shadow */
+            box-shadow: none;
             transition: transform 0.2s ease;
-            /* Add a faint shadow to the emoji itself so it's visible */
             text-shadow: 0 0 4px rgba(0,0,0,0.4);
         }
         #vlg-grab-button:hover {
             transform: scale(1.1);
-            text-shadow: 0 0 6px rgba(0,0,0,0.7); /* Brighter shadow on hover */
+            text-shadow: 0 0 6px rgba(0,0,0,0.7);
         }
         #vlg-panel {
             position: fixed;
-            bottom: 80px; /* Positioned above the grab button */
+            bottom: 80px;
             right: 20px;
             z-index: 99999;
             width: 400px;
@@ -140,6 +146,7 @@
 
     /**
      * METHOD 1: Scan HTML for <video> and <source> tags.
+     * This will only find videos on the *main page*.
      */
     function scanHtmlForVideoUrls() {
         const videoElements = document.querySelectorAll('video');
@@ -161,7 +168,8 @@
 
     /**
      * METHOD 2: Use PerformanceObserver to watch for network requests.
-     * This will find .m3u8 and .mpd files loaded by JS players.
+     * This will find .m3u8 and .mpd files loaded by JS players,
+     * ***even if they are loaded from inside an iframe.***
      */
     function startNetworkMonitoring() {
         try {
@@ -184,7 +192,6 @@
 
     /**
      * Event handler for the main "grab" button.
-     * It runs the HTML scan *again* just in case new videos appeared.
      */
     function onGrabButtonClick() {
         // Run the HTML scan again to catch any new videos
