@@ -2,9 +2,9 @@
 // @name            Video URL Grabber
 // @description     Finds the playing video URLs in the current page
 // @version         3.7
-// @author          https://github.com/Rainman69/video-link-grabber
-// @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          TheBestPessimist
+// @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
+// @author          https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
 // @match           *://*/*
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-url-grabber/video-url-grabber.user.js
