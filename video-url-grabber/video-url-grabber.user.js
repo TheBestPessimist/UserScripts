@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name            Video URL Grabber
 // @description     Finds the playing video URLs in the current page
-// @version         3.7
+// @version         3.8
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
-// @match           *://*/*
+// @match        *://*/*
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-url-grabber/video-url-grabber.user.js
-// @grant           GM_addStyle
-// @grant           GM_setClipboard
+// @grant        GM_addStyle
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 (function() {
@@ -83,7 +83,6 @@
 
     if (isTopWindow) {
 
-        // --- 1. NEW: Store original history functions to detect SPA navigation ---
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
 
@@ -120,6 +119,7 @@
                 transition: transform 0.2s ease, opacity 0.2s ease;
                 text-shadow: 0 0 4px rgba(0,0,0,0.4);
                 opacity: 0.5;
+                display: none; /* Hidden by default */
             }
             #vlg-grab-button:hover {
                 transform: scale(1.1);
@@ -179,13 +179,25 @@
 
         // --- Event Handlers (Top Window) ---
 
-        // --- 2. NEW: Function to clear URLs and hide panel on navigation ---
+        // Function to check for videos and show/hide button
+        function updateButtonVisibility() {
+            // Scan the top-level HTML just in case
+            scanHtmlForVideoUrls();
+            // Check if our Set (which includes iframe URLs) has anything
+            if (foundUrls.size > 0) {
+                grabButton.style.display = 'block';
+            } else {
+                grabButton.style.display = 'none';
+            }
+        }
+
+        // Function to clear URLs and hide panel on navigation
         function clearUrlsOnNav() {
             foundUrls.clear();
             panel.style.display = 'none';
+            grabButton.style.display = 'none'; // Explicitly hide button on nav
         }
 
-        // --- 3. NEW: Monkey-patch history API to detect SPA navigation ---
         history.pushState = function() {
             clearUrlsOnNav();
             return originalPushState.apply(this, arguments);
@@ -195,23 +207,20 @@
             return originalReplaceState.apply(this, arguments);
         };
 
-        // --- 4. NEW: Listen for back/forward button clicks ---
         window.addEventListener('popstate', clearUrlsOnNav);
-
 
         // Listen for messages from iframes
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === SCRIPT_ID && event.data.url) {
                 foundUrls.add(event.data.url);
+                updateButtonVisibility(); // Show button as soon as an iframe reports a URL
             }
         });
 
         // Main button click handler
         grabButton.addEventListener('click', () => {
-            // Run a final scan on the top page
             scanHtmlForVideoUrls();
 
-            // Clear previous list
             vlgListContainer.innerHTML = '';
             vlgMessage.textContent = '';
 
@@ -219,7 +228,6 @@
 
             if (allUrls.length > 0) {
                 allUrls.forEach(url => {
-                    // Create the elements for this URL entry
                     const entryDiv = document.createElement('div');
                     entryDiv.className = 'vlg-url-entry';
 
@@ -233,7 +241,6 @@
                     copyButton.className = 'vlg-copy-single-btn';
                     copyButton.textContent = 'Copy';
 
-                    // Add click listener for this specific button
                     copyButton.addEventListener('click', () => {
                         GM_setClipboard(url);
                         copyButton.textContent = 'Copied!';
@@ -252,18 +259,13 @@
                 vlgMessage.textContent = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
             }
 
-            // Show the panel
             panel.style.display = 'flex';
         });
 
-        // Close button on the panel
         vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
 
-        // Click outside to close panel
         window.addEventListener('click', (event) => {
-            // Check if the panel is visible
             if (panel.style.display === 'flex') {
-                // Check if the click was outside the panel AND outside the grab button
                 const isClickInsidePanel = panel.contains(event.target);
                 const isClickOnGrabButton = grabButton.contains(event.target) || event.target === grabButton;
 
@@ -273,13 +275,23 @@
             }
         });
 
+        // Start the 5-second interval check (for the main page)
+        setInterval(updateButtonVisibility, 5000);
+        // And run it once on load
+        updateButtonVisibility();
+
     } // End of isTopWindow block
 
     // --- 3. Run Scanners on ALL Frames ---
     // This code runs on the top page AND all iframes
 
+    // Run passive network listener
     startNetworkMonitoring();
+    // Run HTML scan once on load
     scanHtmlForVideoUrls();
     window.addEventListener('load', scanHtmlForVideoUrls);
+
+    // NEW: Run the lightweight HTML scan every 5 seconds in *all* frames
+    setInterval(scanHtmlForVideoUrls, 5000);
 
 })();
