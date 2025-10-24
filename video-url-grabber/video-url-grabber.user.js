@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Video URL Grabber (Advanced Network Scan)
+// @name         Video URL Grabber (Transparent Button)
 // @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.0
+// @version      3.1
 // @description  Finds and copies video URLs, including HLS (.m3u8) and DASH (.mpd) streaming manifests found via network monitoring.
 // @author       Fixed by Gemini
 // @match        *://*/*
@@ -47,27 +47,30 @@
 
     GM_addStyle(`
         #vlg-grab-button {
-            position: fixed;
+            position: fixed;   /* This is better than 'absolute' as it stays on screen when you scroll */
             bottom: 20px;
             right: 20px;
             z-index: 99998;
-            background: #007bff;
-            color: white;
+            background: transparent; /* 1. Made background transparent */
+            color: initial;          /* Use default emoji color */
             border: none;
             border-radius: 50%;
             width: 50px;
             height: 50px;
             font-size: 24px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: none;        /* 1. Removed button shadow */
             transition: transform 0.2s ease;
+            /* Add a faint shadow to the emoji itself so it's visible */
+            text-shadow: 0 0 4px rgba(0,0,0,0.4);
         }
         #vlg-grab-button:hover {
             transform: scale(1.1);
+            text-shadow: 0 0 6px rgba(0,0,0,0.7); /* Brighter shadow on hover */
         }
         #vlg-panel {
             position: fixed;
-            bottom: 80px;
+            bottom: 80px; /* Positioned above the grab button */
             right: 20px;
             z-index: 99999;
             width: 400px;
