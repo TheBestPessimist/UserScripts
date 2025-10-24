@@ -1,31 +1,26 @@
 // ==UserScript==
-// @name         Video URL Grabber (Safe Version)
-// @namespace    https://github.com/Rainman69/video-link-grabber
-// @version      2.0
-// @description  Adds a button to find and copy all video URLs on a page. Safe and does not break site styles.
+// @name         Video URL Grabber (Advanced Network Scan)
+// @namespace    https.github.com/Rainman69/video-link-grabber
+// @version      3.0
+// @description  Finds and copies video URLs, including HLS (.m3u8) and DASH (.mpd) streaming manifests found via network monitoring.
 // @author       Fixed by Gemini
 // @match        *://*/*
 // @grant        GM_addStyle
 // @grant        GM_setClipboard
 // ==/UserScript==
 
-/*
-    A NOTE ON PERMISSIONS:
-    This script uses "@match *://*/*" to run on all sites.
-Unlike the original, this code is SAFE to run everywhere.
-    It only adds a button and doesn't interfere with the page
-until you click it.
-*/
-
 (function() {
     'use strict';
 
-    // --- 1. Create the UI Elements ---
+    // --- 1. A Set to store all found URLs (prevents duplicates) ---
+    const foundUrls = new Set();
+
+    // --- 2. Create the UI Elements ---
 
     // Create the main button
     const grabButton = document.createElement('button');
     grabButton.id = 'vlg-grab-button';
-    grabButton.textContent = '🎬'; // Simple emoji for the button
+    grabButton.textContent = '🎬';
     document.body.appendChild(grabButton);
 
     // Create the results panel (hidden by default)
@@ -48,10 +43,8 @@ until you click it.
     const vlgCloseBtn = document.getElementById('vlg-close-btn');
     const vlgMessage = document.getElementById('vlg-message');
 
-    // --- 2. Add Styles (Safely!) ---
+    // --- 3. Add Styles (Safely!) ---
 
-    // Use GM_addStyle to add CSS that ONLY targets our new elements by their ID.
-    // This will not affect any other part of the website.
     GM_addStyle(`
         #vlg-grab-button {
             position: fixed;
@@ -140,48 +133,67 @@ until you click it.
         }
     `);
 
-    // --- 3. Core Logic ---
+    // --- 4. Core Logic ---
 
     /**
-     * Finds all video URLs on the page.
+     * METHOD 1: Scan HTML for <video> and <source> tags.
      */
-    function scanForVideoUrls() {
+    function scanHtmlForVideoUrls() {
         const videoElements = document.querySelectorAll('video');
-        const urls = new Set(); // Use a Set to avoid duplicates
-
         videoElements.forEach(video => {
-            // 1. Check the main 'src' attribute
             if (video.src && !video.src.startsWith('blob:')) {
-                urls.add(video.src);
+                foundUrls.add(video.src);
             }
-            // 2. Check the 'currentSrc' which shows what's actually playing
             if (video.currentSrc && !video.currentSrc.startsWith('blob:')) {
-                urls.add(video.currentSrc);
+                foundUrls.add(video.currentSrc);
             }
-            // 3. Check all <source> tags inside the <video> tag
             const sources = video.querySelectorAll('source');
             sources.forEach(source => {
                 if (source.src && !source.src.startsWith('blob:')) {
-                    urls.add(source.src);
+                    foundUrls.add(source.src);
                 }
             });
         });
+    }
 
-        return Array.from(urls); // Convert the Set back to an array
+    /**
+     * METHOD 2: Use PerformanceObserver to watch for network requests.
+     * This will find .m3u8 and .mpd files loaded by JS players.
+     */
+    function startNetworkMonitoring() {
+        try {
+            const observer = new PerformanceObserver((list) => {
+                const entries = list.getEntriesByType('resource');
+                entries.forEach(entry => {
+                    const url = entry.name;
+                    // Check for common streaming manifest extensions
+                    if (url.includes('.m3u8') || url.includes('.mpd')) {
+                        foundUrls.add(url);
+                    }
+                });
+            });
+
+            observer.observe({ type: 'resource', buffered: true });
+        } catch (e) {
+            console.error('Video Grabber: PerformanceObserver not supported.', e);
+        }
     }
 
     /**
      * Event handler for the main "grab" button.
+     * It runs the HTML scan *again* just in case new videos appeared.
      */
     function onGrabButtonClick() {
-        const urls = scanForVideoUrls();
+        // Run the HTML scan again to catch any new videos
+        scanHtmlForVideoUrls();
 
-        if (urls.length > 0) {
-            vlgTextarea.value = urls.join('\n');
+        const allUrls = Array.from(foundUrls);
+        if (allUrls.length > 0) {
+            vlgTextarea.value = allUrls.join('\n');
             vlgCopyBtn.disabled = false;
             vlgMessage.textContent = '';
         } else {
-            vlgTextarea.value = 'No shareable video URLs found.';
+            vlgTextarea.value = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
             vlgCopyBtn.disabled = true;
             vlgMessage.textContent = '';
         }
@@ -195,17 +207,21 @@ until you click it.
      */
     function onCopyButtonClick() {
         if (vlgTextarea.value) {
-            // Use GM_setClipboard for reliable copying in a userscript
             GM_setClipboard(vlgTextarea.value);
             vlgMessage.textContent = 'Copied to clipboard!';
             setTimeout(() => { vlgMessage.textContent = ''; }, 2000);
         }
     }
 
-    // --- 4. Attach Event Listeners ---
+    // --- 5. Attach Event Listeners and Start ---
 
     grabButton.addEventListener('click', onGrabButtonClick);
     vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
     vlgCopyBtn.addEventListener('click', onCopyButtonClick);
+
+    // Start monitoring network requests as soon as the script loads
+    startNetworkMonitoring();
+    // Also run the HTML scan once on load
+    scanHtmlForVideoUrls();
 
 })();
