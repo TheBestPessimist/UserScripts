@@ -1,13 +1,15 @@
 // ==UserScript==
-// @name         Video URL Grabber (v3.6)
-// @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.6
-// @description  Finds URLs (incl. m3u8/mpd). List now clears on page navigation (SPAs).
-// @author       Fixed by Gemini
-// @match        *://*/*
-// @grant        GM_addStyle
-// @grant        GM_setClipboard
-// Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
+// @name            Video URL Grabber
+// @description     Finds the playing video URLs in the current page
+// @version         3.7
+// @author          https://github.com/Rainman69/video-link-grabber
+// @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
+// @author          TheBestPessimist
+// @namespace       https://git.tbp.land/
+// @match           *://*/*
+// @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-url-grabber/video-url-grabber.user.js
+// @grant           GM_addStyle
+// @grant           GM_setClipboard
 // ==/UserScript==
 
 (function() {
