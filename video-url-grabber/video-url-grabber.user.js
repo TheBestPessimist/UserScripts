@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Video URL Grabber (v3.5)
+// @name         Video URL Grabber (v3.6)
 // @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.5
-// @description  Finds URLs (incl. m3u8/mpd) and lists them. Click-outside-to-close and more transparent button.
+// @version      3.6
+// @description  Finds URLs (incl. m3u8/mpd). List now clears on page navigation (SPAs).
 // @author       Fixed by Gemini
 // @match        *://*/*
 // @grant        GM_addStyle
@@ -79,6 +79,11 @@
     // --- 2. UI and Logic for TOP WINDOW ONLY ---
 
     if (isTopWindow) {
+
+        // --- 1. NEW: Store original history functions to detect SPA navigation ---
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+
         // --- Create UI ---
         const grabButton = document.createElement('button');
         grabButton.id = 'vlg-grab-button';
@@ -109,14 +114,14 @@
                 background: transparent; color: initial; border: none;
                 border-radius: 50%; width: 50px; height: 50px;
                 font-size: 24px; cursor: pointer; box-shadow: none;
-                transition: transform 0.2s ease, opacity 0.2s ease; /* Added opacity to transition */
+                transition: transform 0.2s ease, opacity 0.2s ease;
                 text-shadow: 0 0 4px rgba(0,0,0,0.4);
-                opacity: 0.5; /* 2. Made button more transparent */
+                opacity: 0.5;
             }
             #vlg-grab-button:hover {
                 transform: scale(1.1);
                 text-shadow: 0 0 6px rgba(0,0,0,0.7);
-                opacity: 0.8; /* 2. Make it slightly more visible on hover */
+                opacity: 0.8;
             }
             #vlg-panel {
                 position: fixed; bottom: 80px; right: 20px; z-index: 99999;
@@ -170,6 +175,26 @@
         `);
 
         // --- Event Handlers (Top Window) ---
+
+        // --- 2. NEW: Function to clear URLs and hide panel on navigation ---
+        function clearUrlsOnNav() {
+            foundUrls.clear();
+            panel.style.display = 'none';
+        }
+
+        // --- 3. NEW: Monkey-patch history API to detect SPA navigation ---
+        history.pushState = function() {
+            clearUrlsOnNav();
+            return originalPushState.apply(this, arguments);
+        };
+        history.replaceState = function() {
+            clearUrlsOnNav();
+            return originalReplaceState.apply(this, arguments);
+        };
+
+        // --- 4. NEW: Listen for back/forward button clicks ---
+        window.addEventListener('popstate', clearUrlsOnNav);
+
 
         // Listen for messages from iframes
         window.addEventListener('message', (event) => {
@@ -231,7 +256,7 @@
         // Close button on the panel
         vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
 
-        // 1. New listener: Click outside to close panel
+        // Click outside to close panel
         window.addEventListener('click', (event) => {
             // Check if the panel is visible
             if (panel.style.display === 'flex') {
