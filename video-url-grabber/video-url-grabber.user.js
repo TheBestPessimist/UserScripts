@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Video URL Grabber (iFrame Communicator)
+// @name         Video URL Grabber (Individual Copy)
 // @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.3
-// @description  Finds video URLs (incl. m3u8/mpd) by network scan. Now communicates between iframes and the main page.
+// @version      3.4
+// @description  Finds URLs (incl. m3u8/mpd) and lists them with individual copy buttons. Works with iframes.
 // @author       Fixed by Gemini
 // @match        *://*/*
 // @grant        GM_addStyle
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 (function() {
-    'useS strict';
+    'use strict';
 
     const isTopWindow = (window.self === window.top);
     const SCRIPT_ID = 'vlg-message-id'; // Identifier for our messages
@@ -87,19 +87,19 @@
 
         const panel = document.createElement('div');
         panel.id = 'vlg-panel';
+        // Updated HTML for the panel
         panel.innerHTML = `
             <div class="vlg-header">
                 <strong>Video URLs Found</strong>
                 <button id="vlg-close-btn">&times;</button>
             </div>
-            <textarea id="vlg-textarea" readonly></textarea>
-            <button id="vlg-copy-btn">Copy All</button>
+            <div id="vlg-url-list-container"></div>
             <span id="vlg-message"></span>
         `;
         document.body.appendChild(panel);
 
-        const vlgTextarea = document.getElementById('vlg-textarea');
-        const vlgCopyBtn = document.getElementById('vlg-copy-btn');
+        // Get references to new elements
+        const vlgListContainer = document.getElementById('vlg-url-list-container');
         const vlgCloseBtn = document.getElementById('vlg-close-btn');
         const vlgMessage = document.getElementById('vlg-message');
 
@@ -115,67 +115,125 @@
             #vlg-grab-button:hover { transform: scale(1.1); text-shadow: 0 0 6px rgba(0,0,0,0.7); }
             #vlg-panel {
                 position: fixed; bottom: 80px; right: 20px; z-index: 99999;
-                width: 400px; max-width: 90vw; background: #ffffff;
-                border: 1px solid #cccccc; border-radius: 8px;
+                width: 400px; max-width: 90vw; max-height: 40vh; /* Added max-height */
+                background: #ffffff; border: 1px solid #cccccc; border-radius: 8px;
                 box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-family: Arial, sans-serif;
                 font-size: 14px; color: #333; display: none;
                 flex-direction: column; padding: 12px; box-sizing: border-box;
             }
-            #vlg-panel .vlg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 16px; }
+            #vlg-panel .vlg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 16px; flex-shrink: 0; }
             #vlg-panel #vlg-close-btn { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; line-height: 1; padding: 0; }
-            #vlg-panel #vlg-textarea { width: 100%; min-height: 150px; resize: vertical; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-sizing: border-box; font-family: 'Courier New', monospace; font-size: 12px; color: #000; }
-            #vlg-panel #vlg-copy-btn { background: #28a745; color: white; border: none; border-radius: 4px; padding: 10px; cursor: pointer; margin-top: 10px; font-size: 14px; }
-            #vlg-panel #vlg-copy-btn:disabled { background: #aaa; }
-            #vlg-panel #vlg-message { margin-top: 5px; font-size: 12px; color: #28a745; text-align: center; }
+            /* New styles for the URL list */
+            #vlg-url-list-container {
+                overflow-y: auto; /* Make the list scrollable */
+                flex-grow: 1;
+            }
+            .vlg-url-entry {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+            .vlg-url-input {
+                flex-grow: 1;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                padding: 6px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-right: 8px;
+                color: #000;
+            }
+            .vlg-copy-single-btn {
+                background: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 10px;
+                cursor: pointer;
+                font-size: 12px;
+                flex-shrink: 0;
+            }
+            .vlg-copy-single-btn:disabled {
+                background: #28a745; /* Green when "Copied!" */
+            }
+            /* End of new styles */
+            #vlg-panel #vlg-message {
+                margin-top: 5px;
+                font-size: 12px;
+                color: #888;
+                text-align: center;
+                flex-shrink: 0;
+            }
         `);
 
         // --- Event Handlers (Top Window) ---
 
         // Listen for messages from iframes
         window.addEventListener('message', (event) => {
-            // Check if the message is from our script and has a URL
             if (event.data && event.data.type === SCRIPT_ID && event.data.url) {
                 foundUrls.add(event.data.url);
             }
         });
 
+        // Main button click handler
         grabButton.addEventListener('click', () => {
-            // Run a final scan on the top page just in case
+            // Run a final scan on the top page
             scanHtmlForVideoUrls();
 
+            // Clear previous list
+            vlgListContainer.innerHTML = '';
+            vlgMessage.textContent = '';
+
             const allUrls = Array.from(foundUrls);
+
             if (allUrls.length > 0) {
-                vlgTextarea.value = allUrls.join('\n');
-                vlgCopyBtn.disabled = false;
-                vlgMessage.textContent = '';
+                allUrls.forEach(url => {
+                    // Create the elements for this URL entry
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'vlg-url-entry';
+
+                    const urlInput = document.createElement('input');
+                    urlInput.type = 'text';
+                    urlInput.className = 'vlg-url-input';
+                    urlInput.value = url;
+                    urlInput.readOnly = true;
+
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'vlg-copy-single-btn';
+                    copyButton.textContent = 'Copy';
+
+                    // Add click listener for this specific button
+                    copyButton.addEventListener('click', () => {
+                        GM_setClipboard(url);
+                        copyButton.textContent = 'Copied!';
+                        copyButton.disabled = true;
+                        setTimeout(() => {
+                            copyButton.textContent = 'Copy';
+                            copyButton.disabled = false;
+                        }, 2000);
+                    });
+
+                    entryDiv.appendChild(urlInput);
+                    entryDiv.appendChild(copyButton);
+                    vlgListContainer.appendChild(entryDiv);
+                });
             } else {
-                vlgTextarea.value = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
-                vlgCopyBtn.disabled = true;
-                vlgMessage.textContent = '';
+                vlgMessage.textContent = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
             }
+
+            // Show the panel
             panel.style.display = 'flex';
         });
 
         vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
-
-        vlgCopyBtn.addEventListener('click', () => {
-            if (vlgTextarea.value) {
-                GM_setClipboard(vlgTextarea.value);
-                vlgMessage.textContent = 'Copied to clipboard!';
-                setTimeout(() => { vlgMessage.textContent = ''; }, 2000);
-            }
-        });
 
     } // End of isTopWindow block
 
     // --- 3. Run Scanners on ALL Frames ---
     // This code runs on the top page AND all iframes
 
-    // Run scanners immediately
     startNetworkMonitoring();
     scanHtmlForVideoUrls();
-
-    // Run HTML scan again after the page (or iframe) has fully loaded
     window.addEventListener('load', scanHtmlForVideoUrls);
 
 })();
