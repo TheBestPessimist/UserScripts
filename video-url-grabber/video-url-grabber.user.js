@@ -7,6 +7,7 @@
 // @match        *://*/*
 // @grant        GM_addStyle
 // @grant        GM_setClipboard
+// Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // ==/UserScript==
 
 (function() {
