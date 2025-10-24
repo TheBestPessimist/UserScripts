@@ -6,6 +6,7 @@
 // @namespace       https://git.tbp.land/
 // @match           *://*.youtube.com/*
 // @require         https://raw.githubusercontent.com/fuzetsu/userscripts/master/wait-for-elements/wait-for-elements.js
+// @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/youtube-auto-dislike/youtube-auto-dislike.user.js
 // ==/UserScript==
 /**
  * Note: Using the function `waitForElems` from the required library above

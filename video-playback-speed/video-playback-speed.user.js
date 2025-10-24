@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         Video Playback Speed
-// @description  Change video playback speed with keys `[`, `]`, `\`
-// @version      1.0.8
-// @author       TheBestPessimist
-// @run-at       document-end
-// @namespace    https://git.tbp.land/
-// @grant        none
-//
+// @name            Video Playback Speed
+// @description     Change video playback speed with keys `[`, `]`, `\`
+// @version         1.0.8
+// @author          TheBestPessimist
+// @run-at          document-end
+// @namespace       https://git.tbp.land/
+// @grant           none
+// @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-playback-speed/video-playback-speed.user.js
 // ==/UserScript==
 
 // Code taken from: https://greasyfork.org/en/scripts/30506-video-speed-buttons
