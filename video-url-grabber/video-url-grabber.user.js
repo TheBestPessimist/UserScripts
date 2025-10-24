@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Video URL Grabber (Individual Copy)
+// @name         Video URL Grabber (v3.5)
 // @namespace    https.github.com/Rainman69/video-link-grabber
-// @version      3.4
-// @description  Finds URLs (incl. m3u8/mpd) and lists them with individual copy buttons. Works with iframes.
+// @version      3.5
+// @description  Finds URLs (incl. m3u8/mpd) and lists them. Click-outside-to-close and more transparent button.
 // @author       Fixed by Gemini
 // @match        *://*/*
 // @grant        GM_addStyle
@@ -87,7 +87,6 @@
 
         const panel = document.createElement('div');
         panel.id = 'vlg-panel';
-        // Updated HTML for the panel
         panel.innerHTML = `
             <div class="vlg-header">
                 <strong>Video URLs Found</strong>
@@ -110,12 +109,18 @@
                 background: transparent; color: initial; border: none;
                 border-radius: 50%; width: 50px; height: 50px;
                 font-size: 24px; cursor: pointer; box-shadow: none;
-                transition: transform 0.2s ease; text-shadow: 0 0 4px rgba(0,0,0,0.4);
+                transition: transform 0.2s ease, opacity 0.2s ease; /* Added opacity to transition */
+                text-shadow: 0 0 4px rgba(0,0,0,0.4);
+                opacity: 0.5; /* 2. Made button more transparent */
             }
-            #vlg-grab-button:hover { transform: scale(1.1); text-shadow: 0 0 6px rgba(0,0,0,0.7); }
+            #vlg-grab-button:hover {
+                transform: scale(1.1);
+                text-shadow: 0 0 6px rgba(0,0,0,0.7);
+                opacity: 0.8; /* 2. Make it slightly more visible on hover */
+            }
             #vlg-panel {
                 position: fixed; bottom: 80px; right: 20px; z-index: 99999;
-                width: 400px; max-width: 90vw; max-height: 40vh; /* Added max-height */
+                width: 400px; max-width: 90vw; max-height: 40vh;
                 background: #ffffff; border: 1px solid #cccccc; border-radius: 8px;
                 box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-family: Arial, sans-serif;
                 font-size: 14px; color: #333; display: none;
@@ -123,9 +128,8 @@
             }
             #vlg-panel .vlg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 16px; flex-shrink: 0; }
             #vlg-panel #vlg-close-btn { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; line-height: 1; padding: 0; }
-            /* New styles for the URL list */
             #vlg-url-list-container {
-                overflow-y: auto; /* Make the list scrollable */
+                overflow-y: auto;
                 flex-grow: 1;
             }
             .vlg-url-entry {
@@ -154,9 +158,8 @@
                 flex-shrink: 0;
             }
             .vlg-copy-single-btn:disabled {
-                background: #28a745; /* Green when "Copied!" */
+                background: #28a745;
             }
-            /* End of new styles */
             #vlg-panel #vlg-message {
                 margin-top: 5px;
                 font-size: 12px;
@@ -225,7 +228,22 @@
             panel.style.display = 'flex';
         });
 
+        // Close button on the panel
         vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
+
+        // 1. New listener: Click outside to close panel
+        window.addEventListener('click', (event) => {
+            // Check if the panel is visible
+            if (panel.style.display === 'flex') {
+                // Check if the click was outside the panel AND outside the grab button
+                const isClickInsidePanel = panel.contains(event.target);
+                const isClickOnGrabButton = grabButton.contains(event.target) || event.target === grabButton;
+
+                if (!isClickInsidePanel && !isClickOnGrabButton) {
+                    panel.style.display = 'none';
+                }
+            }
+        });
 
     } // End of isTopWindow block
 
