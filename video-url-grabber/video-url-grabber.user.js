@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video URL Grabber
 // @description     Finds the playing video URLs in the current page
-// @version         3.10
+// @version         3.11
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -132,7 +132,7 @@
             }
             #vlg-panel {
                 position: fixed; bottom: 80px; right: 20px; z-index: 99999;
-                width: 400px; max-width: 90vw; max-height: 40vh;
+                width: 80vw; max-width: 90vw; max-height: 40vh;
                 background: #ffffff; border: 1px solid #cccccc; border-radius: 8px;
                 box-shadow: 0 6px 20px rgba(0,0,0,0.25); font-family: Arial, sans-serif;
                 font-size: 14px; color: #333; display: none;
