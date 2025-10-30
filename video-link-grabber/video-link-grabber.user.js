@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.14
+// @version         3.15
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -169,7 +169,15 @@
                 white-space: normal;
                 overflow-wrap: anywhere;
                 display: block;
-                cursor: text;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            .vlg-url-input:hover {
+                background: #f0f0f0;
+            }
+            .vlg-url-input.vlg-copied {
+                background: #d4edda;
+                border-color: #28a745;
             }
             .vlg-copy-single-btn {
                 background: #007bff;
@@ -214,21 +222,28 @@
                     urlBox.setAttribute('role', 'textbox');
                     urlBox.setAttribute('aria-readonly', 'true');
                     urlBox.setAttribute('tabindex', '0');
-                    urlBox.title = url;
 
                     const copyButton = document.createElement('button');
                     copyButton.className = 'vlg-copy-single-btn';
                     copyButton.textContent = 'Copy';
 
-                    copyButton.addEventListener('click', () => {
+                    const copyToClipboard = () => {
                         GM_setClipboard(url);
+                        urlBox.classList.add('vlg-copied');
                         copyButton.textContent = 'Copied!';
                         copyButton.disabled = true;
                         setTimeout(() => {
+                            urlBox.classList.remove('vlg-copied');
                             copyButton.textContent = 'Copy';
                             copyButton.disabled = false;
                         }, 2000);
-                    });
+                    };
+
+                    // Click on URL box to copy
+                    urlBox.addEventListener('click', copyToClipboard);
+
+                    // Click on copy button to copy
+                    copyButton.addEventListener('click', copyToClipboard);
 
                     entryDiv.appendChild(urlBox);
                     entryDiv.appendChild(copyButton);
