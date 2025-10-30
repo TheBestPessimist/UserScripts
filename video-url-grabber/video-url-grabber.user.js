@@ -6,13 +6,13 @@
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
-// @match        *://*/*
-// @exclude      *://*.google.com/*
-// @exclude      *://*.inoreader.com/*
-// @exclude      *://*.dpreview.com/*
+// @match           *://*/*
+// @exclude         *://*.google.com/*
+// @exclude         *://*.inoreader.com/*
+// @exclude         *://*.dpreview.com/*
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-url-grabber/video-url-grabber.user.js
-// @grant        GM_addStyle
-// @grant        GM_setClipboard
+// @grant           GM_addStyle
+// @grant           GM_setClipboard
 // ==/UserScript==
 
 (function() {
