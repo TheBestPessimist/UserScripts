@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name            Video URL Grabber
-// @description     Finds the playing video URLs in the current page
+// @name            Video Link Grabber
+// @description     Finds the playing video Links in the current page
 // @version         3.13
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
@@ -10,7 +10,7 @@
 // @exclude         *://*.google.com/*
 // @exclude         *://*.inoreader.com/*
 // @exclude         *://*.dpreview.com/*
-// @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-url-grabber/video-url-grabber.user.js
+// @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-link-grabber/video-link-grabber.user.js
 // @grant           GM_addStyle
 // @grant           GM_setClipboard
 // ==/UserScript==
