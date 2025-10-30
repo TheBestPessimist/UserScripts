@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video URL Grabber
 // @description     Finds the playing video URLs in the current page
-// @version         3.9
+// @version         3.10
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -88,6 +88,7 @@
 
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
+        let isPanelOpen = false;
 
         // --- Create UI ---
         const grabButton = document.createElement('button');
@@ -182,48 +183,7 @@
 
         // --- Event Handlers (Top Window) ---
 
-        // Function to check for videos and show/hide button
-        function updateButtonVisibility() {
-            // Scan the top-level HTML just in case
-            scanHtmlForVideoUrls();
-            // Check if our Set (which includes iframe URLs) has anything
-            if (foundUrls.size > 0) {
-                grabButton.style.display = 'block';
-            } else {
-                grabButton.style.display = 'none';
-            }
-        }
-
-        // Function to clear URLs and hide panel on navigation
-        function clearUrlsOnNav() {
-            foundUrls.clear();
-            panel.style.display = 'none';
-            grabButton.style.display = 'none'; // Explicitly hide button on nav
-        }
-
-        history.pushState = function() {
-            clearUrlsOnNav();
-            return originalPushState.apply(this, arguments);
-        };
-        history.replaceState = function() {
-            clearUrlsOnNav();
-            return originalReplaceState.apply(this, arguments);
-        };
-
-        window.addEventListener('popstate', clearUrlsOnNav);
-
-        // Listen for messages from iframes
-        window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === SCRIPT_ID && event.data.url) {
-                foundUrls.add(event.data.url);
-                updateButtonVisibility(); // Show button as soon as an iframe reports a URL
-            }
-        });
-
-        // Main button click handler
-        grabButton.addEventListener('click', () => {
-            scanHtmlForVideoUrls();
-
+        function refreshUrlListInPanel() {
             vlgListContainer.innerHTML = '';
             vlgMessage.textContent = '';
 
@@ -261,11 +221,63 @@
             } else {
                 vlgMessage.textContent = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
             }
+        }
 
-            panel.style.display = 'flex';
+        // Function to check for videos and show/hide button
+        function updateButtonVisibility() {
+            // Scan the top-level HTML just in case
+            scanHtmlForVideoUrls();
+            // Check if our Set (which includes iframe URLs) has anything
+            if (foundUrls.size > 0) {
+                grabButton.style.display = 'block';
+                // If panel is open, refresh the list
+                if (isPanelOpen) {
+                    refreshUrlListInPanel();
+                }
+            } else {
+                grabButton.style.display = 'none';
+            }
+        }
+
+        // Function to clear URLs and hide panel on navigation
+        function clearUrlsOnNav() {
+            foundUrls.clear();
+            panel.style.display = 'none';
+            isPanelOpen = false;
+            grabButton.style.display = 'none'; // Explicitly hide button on nav
+        }
+
+        history.pushState = function() {
+            clearUrlsOnNav();
+            return originalPushState.apply(this, arguments);
+        };
+        history.replaceState = function() {
+            clearUrlsOnNav();
+            return originalReplaceState.apply(this, arguments);
+        };
+
+        window.addEventListener('popstate', clearUrlsOnNav);
+
+        // Listen for messages from iframes
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === SCRIPT_ID && event.data.url) {
+                foundUrls.add(event.data.url);
+                updateButtonVisibility();
+            }
         });
 
-        vlgCloseBtn.addEventListener('click', () => panel.style.display = 'none');
+        // Main button click handler
+        grabButton.addEventListener('click', () => {
+            scanHtmlForVideoUrls();
+            refreshUrlListInPanel();
+            panel.style.display = 'flex';
+            isPanelOpen = true;
+        });
+
+        vlgCloseBtn.addEventListener('click', () => {
+            panel.style.display = 'none';
+            isPanelOpen = false;
+        });
 
         window.addEventListener('click', (event) => {
             if (panel.style.display === 'flex') {
@@ -274,6 +286,7 @@
 
                 if (!isClickInsidePanel && !isClickOnGrabButton) {
                     panel.style.display = 'none';
+                    isPanelOpen = false;
                 }
             }
         });
