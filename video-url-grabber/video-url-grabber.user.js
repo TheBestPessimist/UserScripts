@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video URL Grabber
 // @description     Finds the playing video URLs in the current page
-// @version         3.12
+// @version         3.13
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -100,7 +100,7 @@
         panel.id = 'vlg-panel';
         panel.innerHTML = `
             <div class="vlg-header">
-                <strong>Video URLs Found</strong>
+                <strong id="vlg-header-title">Video URLs Found</strong>
                 <button id="vlg-close-btn">&times;</button>
             </div>
             <div id="vlg-url-list-container"></div>
@@ -109,6 +109,7 @@
         document.body.appendChild(panel);
 
         // Get references to new elements
+        const vlgHeaderTitle = document.getElementById('vlg-header-title');
         const vlgListContainer = document.getElementById('vlg-url-list-container');
         const vlgCloseBtn = document.getElementById('vlg-close-btn');
         const vlgMessage = document.getElementById('vlg-message');
@@ -188,6 +189,8 @@
             vlgMessage.textContent = '';
 
             const allUrls = Array.from(foundUrls);
+
+            vlgHeaderTitle.textContent = `Video URLs Found: ${allUrls.length}`;
 
             if (allUrls.length > 0) {
                 allUrls.forEach(url => {
