@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.13
+// @version         3.14
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -139,6 +139,11 @@
                 font-size: 14px; color: #333; display: none;
                 flex-direction: column; padding: 12px; box-sizing: border-box;
             }
+            #vlg-panel, #vlg-panel * {
+                -webkit-user-select: text !important;
+                user-select: text !important;
+            }
+
             #vlg-panel .vlg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 16px; flex-shrink: 0; }
             #vlg-panel #vlg-close-btn { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; line-height: 1; padding: 0; }
             #vlg-url-list-container {
@@ -159,6 +164,12 @@
                 border-radius: 4px;
                 margin-right: 8px;
                 color: #000;
+                background: #fff;
+                /* Let long URLs wrap to multiple lines; short ones remain one line */
+                white-space: normal;
+                overflow-wrap: anywhere;
+                display: block;
+                cursor: text;
             }
             .vlg-copy-single-btn {
                 background: #007bff;
@@ -197,11 +208,13 @@
                     const entryDiv = document.createElement('div');
                     entryDiv.className = 'vlg-url-entry';
 
-                    const urlInput = document.createElement('input');
-                    urlInput.type = 'text';
-                    urlInput.className = 'vlg-url-input';
-                    urlInput.value = url;
-                    urlInput.readOnly = true;
+                    const urlBox = document.createElement('div');
+                    urlBox.className = 'vlg-url-input';
+                    urlBox.textContent = url;
+                    urlBox.setAttribute('role', 'textbox');
+                    urlBox.setAttribute('aria-readonly', 'true');
+                    urlBox.setAttribute('tabindex', '0');
+                    urlBox.title = url;
 
                     const copyButton = document.createElement('button');
                     copyButton.className = 'vlg-copy-single-btn';
@@ -217,7 +230,7 @@
                         }, 2000);
                     });
 
-                    entryDiv.appendChild(urlInput);
+                    entryDiv.appendChild(urlBox);
                     entryDiv.appendChild(copyButton);
                     vlgListContainer.appendChild(entryDiv);
                 });
