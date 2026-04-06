@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.18
+// @version         3.20
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -100,7 +100,6 @@
 
         // 3. THE ALLOWLIST (Valid Videos)
         // Check for actual master playlists and full video extensions
-        // (Note: .ts is removed from this list!)
         const videoExtensions = ['.m3u8', '.mpd', '.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv'];
         if (videoExtensions.some(ext => pathname.endsWith(ext))) {
             return true;
@@ -181,22 +180,36 @@
             // Negative markers (fragments, chunks, text, images, blank players)
             const negativeMarkers = ['.ts', '/chunk/', 'storyboard', '.vtt', 'blank.mp4'];
             if (negativeMarkers.some(marker => lowerUrl.includes(marker))) {
-                return -10; // Instantly return low score for junk
+                return -50; // Instantly return low score for junk
             }
 
             // Penalize slightly if it looks like a specific rendition instead of a master manifest
             if (lowerUrl.includes('rendition')) {
-                score -= 5;
+                score -= 30;
             }
 
             const videoFormats = ['.mp4', '.webm', '.mkv'];
             if (videoFormats.some(format => lowerUrl.includes(format))) {
-                score += 5;
+                score += 10;
             }
 
             const manifestFormats = ['.m3u8', '.mpd'];
             if (manifestFormats.some(format => lowerUrl.includes(format))) {
-                score += 10;
+                score += 20;
+            }
+
+            // Resolution scoring
+            // Regex matches e.g. "1080", "1080p", "720", isolated from other numbers
+            const resMatch = lowerUrl.match(/(?:^|[^0-9a-z])(2160|1440|1080|720|480|360|240)p?(?:[^0-9a-z]|$)/);
+            if (resMatch) {
+                const res = parseInt(resMatch[1], 10);
+                if (res >= 2160) score += 8;
+                else if (res >= 1080) score += 6;
+                else if (res >= 720) score += 4;
+                else if (res >= 480) score += 2;
+                else score += 1; // 360 or 240
+            } else if (lowerUrl.includes('4k')) {
+                score += 8;
             }
 
             return score;
@@ -268,7 +281,6 @@
         createUI();
 
         // --- Add Styles ---
-        // Notice the added styles for .vlg-group and .vlg-group-title for the nested layout
         GM_addStyle(`
             #vlg-grab-button {
                 position: fixed; bottom: 20px; right: 20px; z-index: 99998;
@@ -394,14 +406,10 @@
                     const groupDiv = document.createElement('div');
                     groupDiv.className = 'vlg-group';
 
-                    // Determine a simple visual indicator based on the score
-                    let scoreIcon = '🟡';
-                    if (groupData.score >= 5) scoreIcon = '🟢';
-                    if (groupData.score < 0) scoreIcon = '🔴';
-
+                    // Show numeric score
                     const groupTitle = document.createElement('div');
                     groupTitle.className = 'vlg-group-title';
-                    groupTitle.textContent = `${scoreIcon} Base: ${baseUrl}`;
+                    groupTitle.textContent = `[Score: ${groupData.score}] Base: ${baseUrl}`;
                     groupDiv.appendChild(groupTitle);
 
                     // Iterate over the Set of full URLs that share this base
