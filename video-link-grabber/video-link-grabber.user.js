@@ -162,6 +162,48 @@
         };
     }
 
+    function calculateScore(url) {
+        let score = 0;
+        const lowerUrl = url.toLowerCase();
+
+        // Negative markers (fragments, chunks, text, images, blank players)
+        const negativeMarkers = ['.ts', '/chunk/', 'storyboard', '.vtt', 'blank.mp4'];
+        if (negativeMarkers.some(marker => lowerUrl.includes(marker))) {
+            return -50; // Instantly return low score for junk
+        }
+
+        // Penalize slightly if it looks like a specific rendition instead of a master manifest
+        if (lowerUrl.includes('rendition')) {
+            score -= 30;
+        }
+
+        const videoFormats = ['.mp4', '.webm', '.mkv'];
+        if (videoFormats.some(format => lowerUrl.includes(format))) {
+            score += 10;
+        }
+
+        const manifestFormats = ['.m3u8', '.mpd'];
+        if (manifestFormats.some(format => lowerUrl.includes(format))) {
+            score += 20;
+        }
+
+        // Resolution scoring
+        // Regex matches e.g. "1080", "1080p", "720", isolated from other numbers
+        const resMatch = lowerUrl.match(/(?:^|[^0-9a-z])(2160|1440|1080|720|480|360|240)p?(?:[^0-9a-z]|$)/);
+        if (resMatch) {
+            const res = parseInt(resMatch[1], 10);
+            if (res >= 2160) score += 8;
+            else if (res >= 1080) score += 6;
+            else if (res >= 720) score += 4;
+            else if (res >= 480) score += 2;
+            else score += 1; // 360 or 240
+        } else if (lowerUrl.includes('4k')) {
+            score += 8;
+        }
+
+        return score;
+    }
+
     // --- 2. UI and Logic for TOP WINDOW ONLY ---
 
     if (isTopWindow) {
@@ -171,77 +213,6 @@
         let isPanelOpen = false;
 
         let grabButton, panel, vlgHeaderTitle, vlgListContainer, vlgCloseBtn, vlgMessage;
-
-        // --- Helper: Scoring System ---
-        function calculateScore(url) {
-            let score = 0;
-            const lowerUrl = url.toLowerCase();
-
-            // Negative markers (fragments, chunks, text, images, blank players)
-            const negativeMarkers = ['.ts', '/chunk/', 'storyboard', '.vtt', 'blank.mp4'];
-            if (negativeMarkers.some(marker => lowerUrl.includes(marker))) {
-                return -50; // Instantly return low score for junk
-            }
-
-            // Penalize slightly if it looks like a specific rendition instead of a master manifest
-            if (lowerUrl.includes('rendition')) {
-                score -= 30;
-            }
-
-            const videoFormats = ['.mp4', '.webm', '.mkv'];
-            if (videoFormats.some(format => lowerUrl.includes(format))) {
-                score += 10;
-            }
-
-            const manifestFormats = ['.m3u8', '.mpd'];
-            if (manifestFormats.some(format => lowerUrl.includes(format))) {
-                score += 20;
-            }
-
-            // Resolution scoring
-            // Regex matches e.g. "1080", "1080p", "720", isolated from other numbers
-            const resMatch = lowerUrl.match(/(?:^|[^0-9a-z])(2160|1440|1080|720|480|360|240)p?(?:[^0-9a-z]|$)/);
-            if (resMatch) {
-                const res = parseInt(resMatch[1], 10);
-                if (res >= 2160) score += 8;
-                else if (res >= 1080) score += 6;
-                else if (res >= 720) score += 4;
-                else if (res >= 480) score += 2;
-                else score += 1; // 360 or 240
-            } else if (lowerUrl.includes('4k')) {
-                score += 8;
-            }
-
-            return score;
-        }
-
-        // --- Helper: Grouping and Sorting ---
-        function groupAndSortUrls(urlsArray) {
-            const grouped = new Map();
-
-            urlsArray.forEach(fullUrl => {
-                let baseUrl = fullUrl;
-                try {
-                    const urlObj = new URL(fullUrl, window.location.href);
-                    // Strip query parameters for grouping
-                    baseUrl = urlObj.origin + urlObj.pathname;
-                } catch (e) {
-                    // Fallback to full string if URL parsing fails
-                }
-
-                if (!grouped.has(baseUrl)) {
-                    grouped.set(baseUrl, {
-                        score: calculateScore(baseUrl),
-                        fullUrls: new Set()
-                    });
-                }
-
-                grouped.get(baseUrl).fullUrls.add(fullUrl);
-            });
-
-            // Convert to array and sort descending by score
-            return Array.from(grouped.entries()).sort((a, b) => b[1].score - a[1].score);
-        }
 
         // --- Create UI (wait for document.body to be available) ---
         function createUI() {
@@ -392,6 +363,33 @@
         // --- Event Handlers (Top Window) ---
 
         function refreshUrlListInPanel() {
+            function groupAndSortUrls(urlsArray) {
+                const grouped = new Map();
+
+                urlsArray.forEach(fullUrl => {
+                    let baseUrl = fullUrl;
+                    try {
+                        const urlObj = new URL(fullUrl, window.location.href);
+                        // Strip query parameters for grouping
+                        baseUrl = urlObj.origin + urlObj.pathname;
+                    } catch (e) {
+                        // Fallback to full string if URL parsing fails
+                    }
+
+                    if (!grouped.has(baseUrl)) {
+                        grouped.set(baseUrl, {
+                            score: calculateScore(baseUrl),
+                            fullUrls: new Set()
+                        });
+                    }
+
+                    grouped.get(baseUrl).fullUrls.add(fullUrl);
+                });
+
+                // Convert to array and sort descending by score
+                return Array.from(grouped.entries()).sort((a, b) => b[1].score - a[1].score);
+            }
+
             vlgListContainer.innerHTML = '';
             vlgMessage.textContent = '';
 
