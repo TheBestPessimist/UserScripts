@@ -71,12 +71,7 @@
 
         const urlLower = url.toLowerCase();
 
-        // Exclude non-video manifests (PWA, etc.)
-        if (urlLower.includes('.webmanifest') || urlLower.includes('manifest.json')) {
-            return false;
-        }
-
-        // Parse URL to check extension more precisely
+        // 1. Parse URL to check extensions and paths safely (ignoring query tokens)
         let pathname;
         try {
             const urlObj = new URL(url, window.location.href);
@@ -86,13 +81,33 @@
             pathname = urlLower;
         }
 
-        // Check for video file extensions (check the actual file extension, not just anywhere in URL)
-        const videoExtensions = ['.m3u8', '.mpd', '.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv', '.ts'];
-        if (videoExtensions.some(ext => pathname.includes(ext))) {
+        // 2. THE BLOCKLIST (Quick Rejects)
+        // Block known non-video manifests
+        if (pathname.endsWith('.webmanifest') || pathname.endsWith('manifest.json')) {
+            return false;
+        }
+
+        // Block chunk/segment file extensions (.m4s for DASH, .ts for HLS, .vtt for subtitles)
+        if (pathname.endsWith('.m4s') || pathname.endsWith('.ts') || pathname.endsWith('.vtt')) {
+            return false;
+        }
+
+        // Block common CDN folder paths used strictly for chunks
+        const junkPaths = ['/chunk/', '/segment/', '/frag/', '/fragment/'];
+        if (junkPaths.some(junk => pathname.includes(junk))) {
+            return false;
+        }
+
+        // 3. THE ALLOWLIST (Valid Videos)
+        // Check for actual master playlists and full video extensions
+        // (Note: .ts is removed from this list!)
+        const videoExtensions = ['.m3u8', '.mpd', '.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv'];
+        if (videoExtensions.some(ext => pathname.endsWith(ext))) {
             return true;
         }
 
-        // Check for video MIME types in the URL (some CDNs use this)
+        // 4. Fallback for CDN URLs that don't have standard file extensions
+        // Check for video MIME types in the URL
         const videoMimePatterns = ['video/', 'application/x-mpegurl', 'application/dash+xml'];
         if (videoMimePatterns.some(pattern => urlLower.includes(pattern))) {
             return true;
