@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.15
+// @version         3.18
 // @author          TheBestPessimist
 // @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
 // @author          https://github.com/Rainman69/video-link-grabber
@@ -10,6 +10,7 @@
 // @exclude         *://*.google.com/*
 // @exclude         *://*.inoreader.com/*
 // @exclude         *://*.dpreview.com/*
+// @run-at          document-start
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/video-link-grabber/video-link-grabber.user.js
 // @grant           GM_addStyle
 // @grant           GM_setClipboard
@@ -63,6 +64,44 @@
     }
 
     /**
+     * Helper function to check if a URL looks like a video.
+     */
+    function isVideoUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+
+        const urlLower = url.toLowerCase();
+
+        // Exclude non-video manifests (PWA, etc.)
+        if (urlLower.includes('.webmanifest') || urlLower.includes('manifest.json')) {
+            return false;
+        }
+
+        // Parse URL to check extension more precisely
+        let pathname;
+        try {
+            const urlObj = new URL(url, window.location.href);
+            pathname = urlObj.pathname.toLowerCase();
+        } catch (e) {
+            // If URL parsing fails, fall back to simple string matching
+            pathname = urlLower;
+        }
+
+        // Check for video file extensions (check the actual file extension, not just anywhere in URL)
+        const videoExtensions = ['.m3u8', '.mpd', '.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv', '.ts'];
+        if (videoExtensions.some(ext => pathname.includes(ext))) {
+            return true;
+        }
+
+        // Check for video MIME types in the URL (some CDNs use this)
+        const videoMimePatterns = ['video/', 'application/x-mpegurl', 'application/dash+xml'];
+        if (videoMimePatterns.some(pattern => urlLower.includes(pattern))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * METHOD 2: Use PerformanceObserver to watch for network requests.
      */
     function startNetworkMonitoring() {
@@ -71,7 +110,7 @@
                 const entries = list.getEntriesByType('resource');
                 entries.forEach(entry => {
                     const url = entry.name;
-                    if (url.includes('.m3u8') || url.includes('.mpd')) {
+                    if (isVideoUrl(url)) {
                         reportUrl(url);
                     }
                 });
@@ -82,6 +121,33 @@
         }
     }
 
+    /**
+     * METHOD 3: Intercept XMLHttpRequest to catch video requests.
+     */
+    function interceptXHR() {
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+            if (isVideoUrl(url)) {
+                reportUrl(url);
+            }
+            return originalOpen.apply(this, [method, url, ...rest]);
+        };
+    }
+
+    /**
+     * METHOD 4: Intercept fetch API to catch video requests.
+     */
+    function interceptFetch() {
+        const originalFetch = window.fetch;
+        window.fetch = function(input, ...rest) {
+            const url = typeof input === 'string' ? input : input.url;
+            if (isVideoUrl(url)) {
+                reportUrl(url);
+            }
+            return originalFetch.apply(this, [input, ...rest]);
+        };
+    }
+
     // --- 2. UI and Logic for TOP WINDOW ONLY ---
 
     if (isTopWindow) {
@@ -90,31 +156,101 @@
         const originalReplaceState = history.replaceState;
         let isPanelOpen = false;
 
-        // --- Create UI ---
-        const grabButton = document.createElement('button');
-        grabButton.id = 'vlg-grab-button';
-        grabButton.textContent = '🎬';
-        document.body.appendChild(grabButton);
+        let grabButton, panel, vlgHeaderTitle, vlgListContainer, vlgCloseBtn, vlgMessage;
 
-        const panel = document.createElement('div');
-        panel.id = 'vlg-panel';
-        panel.innerHTML = `
-            <div class="vlg-header">
-                <strong id="vlg-header-title">Video URLs Found</strong>
-                <button id="vlg-close-btn">&times;</button>
-            </div>
-            <div id="vlg-url-list-container"></div>
-            <span id="vlg-message"></span>
-        `;
-        document.body.appendChild(panel);
+        // --- Helper: Scoring System ---
+        function calculateScore(url) {
+            let score = 0;
+            const lowerUrl = url.toLowerCase();
 
-        // Get references to new elements
-        const vlgHeaderTitle = document.getElementById('vlg-header-title');
-        const vlgListContainer = document.getElementById('vlg-url-list-container');
-        const vlgCloseBtn = document.getElementById('vlg-close-btn');
-        const vlgMessage = document.getElementById('vlg-message');
+            // Negative markers (fragments, chunks, text, images, blank players)
+            if (lowerUrl.includes('.ts') || lowerUrl.includes('/chunk/') ||
+                lowerUrl.includes('storyboard') || lowerUrl.includes('.vtt') ||
+                lowerUrl.includes('blank.mp4')) {
+                return -10; // Instantly return low score for junk
+            }
+
+            // Positive markers
+            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('.mpd')) {
+                score += 10;
+                // Penalize slightly if it looks like a specific rendition instead of a master manifest
+                if (lowerUrl.includes('rendition')) {
+                    score -= 5;
+                }
+            } else if (lowerUrl.includes('.mp4') || lowerUrl.includes('.webm') || lowerUrl.includes('.mkv')) {
+                score += 5;
+            }
+
+            return score;
+        }
+
+        // --- Helper: Grouping and Sorting ---
+        function groupAndSortUrls(urlsArray) {
+            const grouped = new Map();
+
+            urlsArray.forEach(fullUrl => {
+                let baseUrl = fullUrl;
+                try {
+                    const urlObj = new URL(fullUrl, window.location.href);
+                    // Strip query parameters for grouping
+                    baseUrl = urlObj.origin + urlObj.pathname;
+                } catch (e) {
+                    // Fallback to full string if URL parsing fails
+                }
+
+                if (!grouped.has(baseUrl)) {
+                    grouped.set(baseUrl, {
+                        score: calculateScore(baseUrl),
+                        fullUrls: new Set()
+                    });
+                }
+
+                grouped.get(baseUrl).fullUrls.add(fullUrl);
+            });
+
+            // Convert to array and sort descending by score
+            return Array.from(grouped.entries()).sort((a, b) => b[1].score - a[1].score);
+        }
+
+        // --- Create UI (wait for document.body to be available) ---
+        function createUI() {
+            if (!document.body) {
+                // Body not ready yet, try again soon
+                setTimeout(createUI, 100);
+                return;
+            }
+
+            grabButton = document.createElement('button');
+            grabButton.id = 'vlg-grab-button';
+            grabButton.textContent = '🎬';
+            document.body.appendChild(grabButton);
+
+            panel = document.createElement('div');
+            panel.id = 'vlg-panel';
+            panel.innerHTML = `
+                <div class="vlg-header">
+                    <strong id="vlg-header-title">Video URLs Found</strong>
+                    <button id="vlg-close-btn">&times;</button>
+                </div>
+                <div id="vlg-url-list-container"></div>
+                <span id="vlg-message"></span>
+            `;
+            document.body.appendChild(panel);
+
+            // Get references to new elements
+            vlgHeaderTitle = document.getElementById('vlg-header-title');
+            vlgListContainer = document.getElementById('vlg-url-list-container');
+            vlgCloseBtn = document.getElementById('vlg-close-btn');
+            vlgMessage = document.getElementById('vlg-message');
+
+            // Set up event handlers after UI is created
+            setupEventHandlers();
+        }
+
+        createUI();
 
         // --- Add Styles ---
+        // Notice the added styles for .vlg-group and .vlg-group-title for the nested layout
         GM_addStyle(`
             #vlg-grab-button {
                 position: fixed; bottom: 20px; right: 20px; z-index: 99998;
@@ -150,22 +286,44 @@
                 overflow-y: auto;
                 flex-grow: 1;
             }
+            
+            /* Nested Layout Styles */
+            .vlg-group {
+                margin-bottom: 12px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+            }
+            .vlg-group:last-child {
+                border-bottom: none;
+            }
+            .vlg-group-title {
+                font-weight: bold;
+                margin-bottom: 6px;
+                font-size: 12px;
+                color: #555;
+                word-break: break-all;
+                background: #f8f9fa;
+                padding: 4px;
+                border-radius: 4px;
+            }
+            
             .vlg-url-entry {
                 display: flex;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 4px;
+                padding-left: 12px; /* Indent for the nested look */
+                border-left: 2px solid #ddd;
             }
             .vlg-url-input {
                 flex-grow: 1;
                 font-family: 'Courier New', monospace;
-                font-size: 12px;
+                font-size: 11px;
                 padding: 6px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 margin-right: 8px;
                 color: #000;
                 background: #fff;
-                /* Let long URLs wrap to multiple lines; short ones remain one line */
                 white-space: normal;
                 overflow-wrap: anywhere;
                 display: block;
@@ -184,9 +342,9 @@
                 color: white;
                 border: none;
                 border-radius: 4px;
-                padding: 6px 10px;
+                padding: 4px 8px;
                 cursor: pointer;
-                font-size: 12px;
+                font-size: 11px;
                 flex-shrink: 0;
             }
             .vlg-copy-single-btn:disabled {
@@ -208,46 +366,66 @@
             vlgMessage.textContent = '';
 
             const allUrls = Array.from(foundUrls);
+            const sortedGroups = groupAndSortUrls(allUrls);
 
-            vlgHeaderTitle.textContent = `Video URLs Found: ${allUrls.length}`;
+            // Update title to show unique base URLs vs total fragments
+            vlgHeaderTitle.textContent = `Video URLs Found: ${allUrls.length} (${sortedGroups.length} Unique Bases)`;
 
-            if (allUrls.length > 0) {
-                allUrls.forEach(url => {
-                    const entryDiv = document.createElement('div');
-                    entryDiv.className = 'vlg-url-entry';
+            if (sortedGroups.length > 0) {
+                sortedGroups.forEach(([baseUrl, groupData]) => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'vlg-group';
 
-                    const urlBox = document.createElement('div');
-                    urlBox.className = 'vlg-url-input';
-                    urlBox.textContent = url;
-                    urlBox.setAttribute('role', 'textbox');
-                    urlBox.setAttribute('aria-readonly', 'true');
-                    urlBox.setAttribute('tabindex', '0');
+                    // Determine a simple visual indicator based on the score
+                    let scoreIcon = '🟡';
+                    if (groupData.score >= 5) scoreIcon = '🟢';
+                    if (groupData.score < 0) scoreIcon = '🔴';
 
-                    const copyButton = document.createElement('button');
-                    copyButton.className = 'vlg-copy-single-btn';
-                    copyButton.textContent = 'Copy';
+                    const groupTitle = document.createElement('div');
+                    groupTitle.className = 'vlg-group-title';
+                    groupTitle.textContent = `${scoreIcon} Base: ${baseUrl}`;
+                    groupDiv.appendChild(groupTitle);
 
-                    const copyToClipboard = () => {
-                        GM_setClipboard(url);
-                        urlBox.classList.add('vlg-copied');
-                        copyButton.textContent = 'Copied!';
-                        copyButton.disabled = true;
-                        setTimeout(() => {
-                            urlBox.classList.remove('vlg-copied');
-                            copyButton.textContent = 'Copy';
-                            copyButton.disabled = false;
-                        }, 2000);
-                    };
+                    // Iterate over the Set of full URLs that share this base
+                    groupData.fullUrls.forEach(url => {
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'vlg-url-entry';
 
-                    // Click on URL box to copy
-                    urlBox.addEventListener('click', copyToClipboard);
+                        const urlBox = document.createElement('div');
+                        urlBox.className = 'vlg-url-input';
+                        urlBox.textContent = url;
+                        urlBox.setAttribute('role', 'textbox');
+                        urlBox.setAttribute('aria-readonly', 'true');
+                        urlBox.setAttribute('tabindex', '0');
 
-                    // Click on copy button to copy
-                    copyButton.addEventListener('click', copyToClipboard);
+                        const copyButton = document.createElement('button');
+                        copyButton.className = 'vlg-copy-single-btn';
+                        copyButton.textContent = 'Copy';
 
-                    entryDiv.appendChild(urlBox);
-                    entryDiv.appendChild(copyButton);
-                    vlgListContainer.appendChild(entryDiv);
+                        const copyToClipboard = () => {
+                            GM_setClipboard(url);
+                            urlBox.classList.add('vlg-copied');
+                            copyButton.textContent = 'Copied!';
+                            copyButton.disabled = true;
+                            setTimeout(() => {
+                                urlBox.classList.remove('vlg-copied');
+                                copyButton.textContent = 'Copy';
+                                copyButton.disabled = false;
+                            }, 2000);
+                        };
+
+                        // Click on URL box to copy
+                        urlBox.addEventListener('click', copyToClipboard);
+
+                        // Click on copy button to copy
+                        copyButton.addEventListener('click', copyToClipboard);
+
+                        entryDiv.appendChild(urlBox);
+                        entryDiv.appendChild(copyButton);
+                        groupDiv.appendChild(entryDiv);
+                    });
+
+                    vlgListContainer.appendChild(groupDiv);
                 });
             } else {
                 vlgMessage.textContent = 'No shareable video URLs found (yet).\n\nTry playing the video to capture its URL.';
@@ -297,40 +475,47 @@
             }
         });
 
-        // Main button click handler
-        grabButton.addEventListener('click', () => {
-            scanHtmlForVideoUrls();
-            refreshUrlListInPanel();
-            panel.style.display = 'flex';
-            isPanelOpen = true;
-        });
+        // Set up event handlers (called after UI is created)
+        function setupEventHandlers() {
+            // Main button click handler
+            grabButton.addEventListener('click', () => {
+                scanHtmlForVideoUrls();
+                refreshUrlListInPanel();
+                panel.style.display = 'flex';
+                isPanelOpen = true;
+            });
 
-        vlgCloseBtn.addEventListener('click', () => {
-            panel.style.display = 'none';
-            isPanelOpen = false;
-        });
+            vlgCloseBtn.addEventListener('click', () => {
+                panel.style.display = 'none';
+                isPanelOpen = false;
+            });
 
-        window.addEventListener('click', (event) => {
-            if (panel.style.display === 'flex') {
-                const isClickInsidePanel = panel.contains(event.target);
-                const isClickOnGrabButton = grabButton.contains(event.target) || event.target === grabButton;
+            window.addEventListener('click', (event) => {
+                if (panel.style.display === 'flex') {
+                    const isClickInsidePanel = panel.contains(event.target);
+                    const isClickOnGrabButton = grabButton.contains(event.target) || event.target === grabButton;
 
-                if (!isClickInsidePanel && !isClickOnGrabButton) {
-                    panel.style.display = 'none';
-                    isPanelOpen = false;
+                    if (!isClickInsidePanel && !isClickOnGrabButton) {
+                        panel.style.display = 'none';
+                        isPanelOpen = false;
+                    }
                 }
-            }
-        });
+            });
 
-        // Start the 5-second interval check (for the main page)
-        setInterval(updateButtonVisibility, 5000);
-        // And run it once on load
-        updateButtonVisibility();
+            // Start the 5-second interval check (for the main page)
+            setInterval(updateButtonVisibility, 5000);
+            // And run it once on load
+            updateButtonVisibility();
+        }
 
     } // End of isTopWindow block
 
     // --- 3. Run Scanners on ALL Frames ---
     // This code runs on the top page AND all iframes
+
+    // Intercept network requests EARLY (before any other scripts run)
+    interceptXHR();
+    interceptFetch();
 
     // Run passive network listener
     startNetworkMonitoring();
