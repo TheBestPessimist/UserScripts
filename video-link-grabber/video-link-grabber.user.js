@@ -179,21 +179,24 @@
             const lowerUrl = url.toLowerCase();
 
             // Negative markers (fragments, chunks, text, images, blank players)
-            if (lowerUrl.includes('.ts') || lowerUrl.includes('/chunk/') ||
-                lowerUrl.includes('storyboard') || lowerUrl.includes('.vtt') ||
-                lowerUrl.includes('blank.mp4')) {
+            const negativeMarkers = ['.ts', '/chunk/', 'storyboard', '.vtt', 'blank.mp4'];
+            if (negativeMarkers.some(marker => lowerUrl.includes(marker))) {
                 return -10; // Instantly return low score for junk
             }
 
-            // Positive markers
-            if (lowerUrl.includes('.m3u8') || lowerUrl.includes('.mpd')) {
-                score += 10;
-                // Penalize slightly if it looks like a specific rendition instead of a master manifest
-                if (lowerUrl.includes('rendition')) {
-                    score -= 5;
-                }
-            } else if (lowerUrl.includes('.mp4') || lowerUrl.includes('.webm') || lowerUrl.includes('.mkv')) {
+            // Penalize slightly if it looks like a specific rendition instead of a master manifest
+            if (lowerUrl.includes('rendition')) {
+                score -= 5;
+            }
+
+            const videoFormats = ['.mp4', '.webm', '.mkv'];
+            if (videoFormats.some(format => lowerUrl.includes(format))) {
                 score += 5;
+            }
+
+            const manifestFormats = ['.m3u8', '.mpd'];
+            if (manifestFormats.some(format => lowerUrl.includes(format))) {
+                score += 10;
             }
 
             return score;
