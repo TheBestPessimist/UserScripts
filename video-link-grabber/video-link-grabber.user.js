@@ -537,9 +537,11 @@
     // --- 3. Run Scanners on ALL Frames ---
     // This code runs on the top page AND all iframes
 
-    // Intercept network requests EARLY (before any other scripts run)
-    interceptXHR();
-    interceptFetch();
+    // // Intercept network requests EARLY (before any other scripts run)
+    // 2026-04-08 Apparently these may not be needed.
+    // if everything still works after .2026-06-08, delete the 2 functions
+    // interceptXHR();
+    // interceptFetch();
 
     // Run passive network listener
     startNetworkMonitoring();
