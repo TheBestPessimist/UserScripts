@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.20
+// @version         3.21
 // @author          TheBestPessimist
 // inspired-by      https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 
-(function() {
+(function () {
     'use strict';
 
     const isTopWindow = (window.self === window.top);
@@ -41,7 +41,7 @@
         } else {
             // We are in an iframe, send the URL to the parent window
             try {
-                window.top.postMessage({ type: SCRIPT_ID, url: url }, '*');
+                window.top.postMessage({type: SCRIPT_ID, url: url}, '*');
             } catch (e) {
                 console.error('Video Grabber (iframe): Could not post message to top window.', e);
             }
@@ -129,7 +129,7 @@
                     }
                 });
             });
-            observer.observe({ type: 'resource', buffered: true });
+            observer.observe({type: 'resource', buffered: true});
         } catch (e) {
             // This might fail in sandboxed iframes, that's okay.
         }
@@ -140,7 +140,7 @@
      */
     function interceptXHR() {
         const originalOpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        XMLHttpRequest.prototype.open = function (method, url, ...rest) {
             if (isVideoUrl(url)) {
                 reportUrl(url);
             }
@@ -153,7 +153,7 @@
      */
     function interceptFetch() {
         const originalFetch = window.fetch;
-        window.fetch = function(input, ...rest) {
+        window.fetch = function (input, ...rest) {
             const url = typeof input === 'string' ? input : input.url;
             if (isVideoUrl(url)) {
                 reportUrl(url);
@@ -475,16 +475,22 @@
         // Function to clear URLs and hide panel on navigation
         function clearUrlsOnNav() {
             foundUrls.clear();
-            panel.style.display = 'none';
             isPanelOpen = false;
-            grabButton.style.display = 'none'; // Explicitly hide button on nav
+
+            // hide the UI only if it has actually been built
+            if (panel) {
+                panel.style.display = 'none';
+            }
+            if (grabButton) {
+                grabButton.style.display = 'none';
+            }
         }
 
-        history.pushState = function() {
+        history.pushState = function () {
             clearUrlsOnNav();
             return originalPushState.apply(this, arguments);
         };
-        history.replaceState = function() {
+        history.replaceState = function () {
             clearUrlsOnNav();
             return originalReplaceState.apply(this, arguments);
         };
