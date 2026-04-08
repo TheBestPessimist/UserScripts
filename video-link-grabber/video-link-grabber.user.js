@@ -3,8 +3,7 @@
 // @description     Finds the playing video Links in the current page
 // @version         3.20
 // @author          TheBestPessimist
-// @author          Gemini 2.5 Pro Chat: https://gemini.google.com/u/1/app/ceea1a18163caae7
-// @author          https://github.com/Rainman69/video-link-grabber
+// inspired-by      https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
 // @match           *://*/*
 // @exclude         *://*.google.com/*
@@ -15,6 +14,7 @@
 // @grant           GM_addStyle
 // @grant           GM_setClipboard
 // ==/UserScript==
+
 
 (function() {
     'use strict';
