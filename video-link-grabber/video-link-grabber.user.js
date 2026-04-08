@@ -63,6 +63,8 @@
         });
     }
 
+
+
     /**
      * Helper function to check if a URL looks like a video.
      */
@@ -160,6 +162,73 @@
             }
             return originalFetch.apply(this, [input, ...rest]);
         };
+    }
+
+    /**
+     * METHOD 5: Monitor the DOM for new video elements and media loading events.
+     * Replaces the heavy 5-second setInterval sweep.
+     */
+    function startDomMonitoring() {
+        // 1. Event Delegation: Catch videos when they actually start loading data
+        // 'useCapture' (true) is required because media events do not bubble up the DOM.
+        ['loadstart', 'loadedmetadata', 'play'].forEach(eventType => {
+            document.addEventListener(eventType, (event) => {
+                const el = event.target;
+                if (el && el.matches && el.matches('video')) {
+                    reportUrl(el.src);
+                    reportUrl(el.currentSrc);
+                    const sources = el.querySelectorAll('source');
+                    sources.forEach(source => reportUrl(source.src));
+                }
+            }, true);
+        });
+
+        // 2. MutationObserver: Catch newly injected videos or changed 'src' attributes
+        const domObserver = new MutationObserver((mutations) => {
+            let requiresScan = false;
+
+            for (const mutation of mutations) {
+                // Did the site change a video's direct src attribute?
+                if (mutation.type === 'attributes' && (mutation.target.tagName === 'VIDEO' || mutation.target.tagName === 'SOURCE')) {
+                    requiresScan = true;
+                    break;
+                }
+
+                // Did the site inject a new node?
+                if (mutation.type === 'childList') {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            // Check if the node is a video/source, or contains a video
+                            if (node.tagName === 'VIDEO' || node.tagName === 'SOURCE' || node.querySelector('video')) {
+                                requiresScan = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (requiresScan) break;
+            }
+
+            if (requiresScan) {
+                scanHtmlForVideoUrls();
+            }
+        });
+
+        // 3. Attach the observer once the body is ready
+        function attachObserver() {
+            if (!document.body) {
+                setTimeout(attachObserver, 50);
+                return;
+            }
+            domObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src'] // Only care if they change the source
+            });
+        }
+
+        attachObserver();
     }
 
     function calculateScore(url) {
@@ -543,19 +612,20 @@
     // --- 3. Run Scanners on ALL Frames ---
     // This code runs on the top page AND all iframes
 
-    // // Intercept network requests EARLY (before any other scripts run)
-    // 2026-04-08 Apparently these may not be needed.
-    // if everything still works after .2026-06-08, delete the 2 functions
-    // interceptXHR();
-    // interceptFetch();
+    /*
+        2026-04-08 Apparently these may not be needed.
+        if everything still works after .2026-06-08, delete the 2 functions
+        // Intercept network requests EARLY (before any other scripts run)
+        interceptXHR();
+        interceptFetch();
 
-    // Run passive network listener
+        // Run HTML scan once on load
+        scanHtmlForVideoUrls();
+        window.addEventListener('load', scanHtmlForVideoUrls);
+        // NEW: Run the lightweight HTML scan every 5 seconds in *all* frames
+        setInterval(scanHtmlForVideoUrls, 5000);
+    */
+
     startNetworkMonitoring();
-    // Run HTML scan once on load
-    scanHtmlForVideoUrls();
-    window.addEventListener('load', scanHtmlForVideoUrls);
-
-    // NEW: Run the lightweight HTML scan every 5 seconds in *all* frames
-    setInterval(scanHtmlForVideoUrls, 5000);
-
+    startDomMonitoring()
 })();
