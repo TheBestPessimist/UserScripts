@@ -21,6 +21,7 @@
 
     const isTopWindow = (window.self === window.top);
     const SCRIPT_ID = 'vlg-message-id'; // Identifier for our messages
+    const UI_UPDATE_EVENT = 'vlg-update-ui'; // Event to trigger UI refresh
     let foundUrls = new Set(); // This will only be used by the top window's list
 
     // --- 1. Core Finders ---
@@ -37,7 +38,13 @@
         }
 
         if (isTopWindow) {
+            const previousSize = foundUrls.size;
             foundUrls.add(url);
+
+            // If a completely new URL was added, tell the UI to wake up
+            if (foundUrls.size > previousSize) {
+                window.dispatchEvent(new Event(UI_UPDATE_EVENT));
+            }
         } else {
             // We are in an iframe, send the URL to the parent window
             try {
@@ -62,7 +69,6 @@
             });
         });
     }
-
 
 
     /**
@@ -110,6 +116,7 @@
         // 4. Fallback for CDN URLs that don't have standard file extensions
         // Check for video MIME types in the URL
         const videoMimePatterns = ['video/', 'application/x-mpegurl', 'application/dash+xml'];
+        // noinspection RedundantIfStatementJS
         if (videoMimePatterns.some(pattern => urlLower.includes(pattern))) {
             return true;
         }
@@ -280,11 +287,13 @@
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
         let isPanelOpen = false;
+        let uiCreated = false;
 
         let grabButton, panel, vlgHeaderTitle, vlgListContainer, vlgCloseBtn, vlgMessage;
 
         // --- Create UI (wait for document.body to be available) ---
         function createUI() {
+            if (uiCreated) return;
             if (!document.body) {
                 // Body not ready yet, try again soon
                 setTimeout(createUI, 100);
@@ -316,9 +325,10 @@
 
             // Set up event handlers after UI is created
             setupEventHandlers();
-        }
 
-        createUI();
+            uiCreated = true;
+            grabButton.style.display = 'block';
+        }
 
         // --- Add Styles ---
         GM_addStyle(`
@@ -525,32 +535,30 @@
             }
         }
 
-        // Function to check for videos and show/hide button
+        // Function to check state and show/hide UI
         function updateButtonVisibility() {
-            // Scan the top-level HTML just in case
-            scanHtmlForVideoUrls();
-            // Check if our Set (which includes iframe URLs) has anything
-            if (foundUrls.size > 0) {
-                grabButton.style.display = 'block';
-                // If panel is open, refresh the list
-                if (isPanelOpen) {
-                    refreshUrlListInPanel();
-                }
+            if (foundUrls.size === 0) {
+                // If no videos, hide the button (if it exists)
+                if (uiCreated) grabButton.style.display = 'none';
+                return;
+            }
+
+            // We have videos!
+            if (!uiCreated) {
+                createUI(); // Build UI & show button for the first time
             } else {
-                grabButton.style.display = 'none';
+                grabButton.style.display = 'block'; // Make sure button is visible
+                if (isPanelOpen) refreshUrlListInPanel(); // Live-update the list if the panel is open
             }
         }
 
-        // Function to clear URLs and hide panel on navigation
+        // Clear URLs and hide panel on SPA navigation/page changed
         function clearUrlsOnNav() {
             foundUrls.clear();
             isPanelOpen = false;
 
-            // hide the UI only if it has actually been built
-            if (panel) {
+            if (uiCreated) {
                 panel.style.display = 'none';
-            }
-            if (grabButton) {
                 grabButton.style.display = 'none';
             }
         }
@@ -569,8 +577,7 @@
         // Listen for messages from iframes
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === SCRIPT_ID && event.data.url) {
-                foundUrls.add(event.data.url);
-                updateButtonVisibility();
+                reportUrl(event.data.url);
             }
         });
 
@@ -578,7 +585,6 @@
         function setupEventHandlers() {
             // Main button click handler
             grabButton.addEventListener('click', () => {
-                scanHtmlForVideoUrls();
                 refreshUrlListInPanel();
                 panel.style.display = 'flex';
                 isPanelOpen = true;
@@ -600,12 +606,12 @@
                     }
                 }
             });
-
-            // Start the 5-second interval check (for the main page)
-            setInterval(updateButtonVisibility, 5000);
-            // And run it once on load
-            updateButtonVisibility();
         }
+
+        // Update the UI whenever a new top-level video is found
+        window.addEventListener(UI_UPDATE_EVENT, updateButtonVisibility);
+        // Also run it once on load to catch anything already in the HTML (i thought this should never happen, but... here we are)
+        updateButtonVisibility();
 
     } // End of isTopWindow block
 
@@ -613,7 +619,7 @@
     // This code runs on the top page AND all iframes
 
     /*
-        2026-04-08 Apparently these may not be needed.
+        todo 2026-04-08 Apparently these may not be needed.
         if everything still works after .2026-06-08, delete the 2 functions
         // Intercept network requests EARLY (before any other scripts run)
         interceptXHR();
