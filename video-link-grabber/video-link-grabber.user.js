@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Video Link Grabber
 // @description     Finds the playing video Links in the current page
-// @version         3.21
+// @version         3.22
 // @author          TheBestPessimist
 // inspired-by      https://github.com/Rainman69/video-link-grabber
 // @namespace       https://git.tbp.land/
