@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name            Bandcamp Discography Link
 // @description     Add a discography link to Bandcamp album pages
-// @version         0.0.1
+// @version         1
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           *://*.bandcamp.com/album/*
+// @match           *://*.bandcamp.com/track/*
 // @run-at          document-end
 // @grant           none
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/bandcamp-discography-link/bandcamp-discography-link.user.js
