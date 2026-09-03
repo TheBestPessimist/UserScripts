@@ -15,3 +15,4 @@ View more information about a particular script by clicking on its name.
 | Video Playback Speed           |      [Info](video-playback-speed/)      |           [Install](../../raw/master/video-playback-speed/video-playback-speed.user.js)           |
 | Video Link Grabber             |       [Info](video-link-grabber/)       |             [Install](../../raw/master/video-link-grabber/video-link-grabber.user.js)             |
 | Bandcamp Discography Link       |    [Info](bandcamp-discography-link/)   |        [Install](../../raw/master/bandcamp-discography-link/bandcamp-discography-link.user.js)     |
+| GitHub Unsplit PR Title        |     [Info](github-unsplit-pr-title/)    |         [Install](../../raw/master/github-unsplit-pr-title/github-unsplit-pr-title.user.js)          |
