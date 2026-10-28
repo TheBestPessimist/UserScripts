@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Fastmail Remap Keys
 // @description     Remap Fastmail keyboard shortcuts
-// @version         1
+// @version         2
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           https://app.fastmail.com/*
@@ -18,11 +18,12 @@
      */
     const MAP = {
         'a': ['*', 'a'],   // select all (Fastmail: * then a). Replaces reply-all.
-        'd': ['#'],   // Delete. Fastmail supports this already with key `d`, but the shortcut does not work for Drafts. If i use `#`, it works as delete `¯\_(ツ)_/¯`
+        '[': ['`'],
         // The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
         'g i': () => goTo('/mail/Inbox/'),
         '1': () => goTo('/mail/Inbox/'),
         'g y': () => goTo('/mail/Youtube'),
+        '2': () => goTo('/mail/Youtube'),
         'g c': () => goTo('/calendar'),
         'g a': () => goTo('/mail/Archive'),
     };
