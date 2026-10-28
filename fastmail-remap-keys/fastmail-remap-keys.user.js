@@ -11,74 +11,82 @@
 // ==/UserScript==
 
 (() => {
-  /**
-   * What you press -> what Fastmail receives.
-   * Left side: space-separated sequence of keys, using `event.key` names ("a", "G" = Shift+g, "*", "Enter") with optional "Ctrl-", "Alt-", "Meta-" prefixes.
-   * Right side: Fastmail keys to replay, same naming.
-   */
-  const MAP = {
-    'a': ['*', 'a'],    // select all (Fastmail: * then a). Replaces reply-all.
-    'g i': ['G', 'i'],  // Shift+g then i. The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
-  };
-  const SEQUENCE_TIMEOUT_MS = 1000;
-  const REPLAY_GAP_MS = 30;
+    /**
+     * What you press -> what Fastmail receives.
+     * Left side: space-separated sequence of keys, using `event.key` names ("a", "G" = Shift+g, "*", "Enter") with optional "Ctrl-", "Alt-", "Meta-" prefixes.
+     * Right side: Fastmail keys to replay, same naming.
+     */
+    const MAP = {
+        'a': ['*', 'a'],   // select all (Fastmail: * then a). Replaces reply-all.
+        'g i': ['G', 'i'],  // Shift+g then i. The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
+    };
+    const SEQUENCE_TIMEOUT_MS = 1000;
+    const REPLAY_GAP_MS = 30;
 
-  const keyName = (e) => (e.ctrlKey ? 'Ctrl-' : '') + (e.altKey ? 'Alt-' : '') + (e.metaKey ? 'Meta-' : '') + e.key;
+    const keyName = (e) => (e.ctrlKey ? 'Ctrl-' : '') + (e.altKey ? 'Alt-' : '') + (e.metaKey ? 'Meta-' : '') + e.key;
 
-  const isTyping = (e) => e.isComposing || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.nodeName) || e.target.isContentEditable;
+    const isTyping = (e) => e.isComposing || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.nodeName) || e.target.isContentEditable;
 
-  const send = (name) => {
-    const m = name.match(/^((?:Ctrl-|Alt-|Meta-)*)(.+)$/);
-    const key = m[2];
-    document.dispatchEvent(new KeyboardEvent('keydown', {
-      key,
-      ctrlKey: m[1].includes('Ctrl-'),
-      altKey: m[1].includes('Alt-'),
-      metaKey: m[1].includes('Meta-'),
-      shiftKey: /^[A-Z]$/.test(key),
-      bubbles: true,
-      cancelable: true,
-    }));
-  };
+    const send = (name) => {
+        const m = name.match(/^((?:Ctrl-|Alt-|Meta-)*)(.+)$/);
+        const key = m[2];
+        const init = {
+            key,
+            ctrlKey: m[1].includes('Ctrl-'),
+            altKey: m[1].includes('Alt-'),
+            metaKey: m[1].includes('Meta-'),
+            shiftKey: /^[A-Z]$/.test(key),
+            bubbles: true,
+            cancelable: true,
+        };
+        const notCancelled = document.dispatchEvent(new KeyboardEvent('keydown', init));
+        // Like a real key press: printable keys also get a keypress, unless the keydown was cancelled. Fastmail reads the second key of `* a` only from keypress.
+        if (notCancelled && key.length === 1 && !init.ctrlKey && !init.metaKey) {
+            document.dispatchEvent(new KeyboardEvent('keypress', init));
+        }
+    };
 
-  // Fastmail opens some menus asynchronously, so the second key of a prefix sequence needs a short gap.
-  const play = async (keys) => {
-    for (const [i, k] of keys.entries()) {
-      if (i > 0) await new Promise((r) => setTimeout(r, REPLAY_GAP_MS));
-      send(k);
-    }
-  };
+    // Fastmail opens some menus asynchronously, so the second key of a prefix sequence needs a short gap.
+    const play = async (keys) => {
+        for (const [i, k] of keys.entries()) {
+            if (i > 0) await new Promise((r) => setTimeout(r, REPLAY_GAP_MS));
+            send(k);
+        }
+    };
 
-  let pending = [];
-  let timer;
+    let pending = [];
+    let timer;
 
-  const flush = () => {
-    clearTimeout(timer);
-    const keys = pending;
-    pending = [];
-    keys.forEach(send);
-  };
+    const flush = () => {
+        clearTimeout(timer);
+        const keys = pending;
+        pending = [];
+        keys.forEach(send);
+    };
 
-  window.addEventListener('keydown', (e) => {
-    // Our own replayed events are untrusted and must reach Fastmail untouched.
-    if (!e.isTrusted || isTyping(e) || ['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+    window.addEventListener('keydown', (e) => {
+        // Our own replayed events are untrusted and must reach Fastmail untouched.
+        if (!e.isTrusted || isTyping(e) || ['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
 
-    const seq = [...pending, keyName(e)].join(' ');
-    const swallow = () => { e.preventDefault(); e.stopImmediatePropagation(); };
+        const seq = [...pending, keyName(e)].join(' ');
+        const swallow = () => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        };
 
-    if (MAP[seq]) {
-      swallow();
-      clearTimeout(timer);
-      pending = [];
-      play(MAP[seq]);
-    } else if (Object.keys(MAP).some((s) => s.startsWith(seq + ' '))) {
-      swallow();
-      clearTimeout(timer);
-      pending = seq.split(' ');
-      timer = setTimeout(flush, SEQUENCE_TIMEOUT_MS);
-    } else if (pending.length) {
-      // Not one of ours: give Fastmail the held-back prefix, then let this key through normally.
-      flush();
-    }
-  }, true);
+        if (MAP[seq]) {
+            swallow();
+            clearTimeout(timer);
+            pending = [];
+            play(MAP[seq]);
+        } else if (Object.keys(MAP).some((s) => s.startsWith(seq + ' '))) {
+            swallow();
+            clearTimeout(timer);
+            pending = seq.split(' ');
+            timer = setTimeout(flush, SEQUENCE_TIMEOUT_MS);
+        } else if (pending.length) {
+            // Not one of ours: give Fastmail the held-back prefix, then let this key through normally.
+            flush();
+        }
+    }, true);
 })();
