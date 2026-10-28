@@ -16,3 +16,4 @@ View more information about a particular script by clicking on its name.
 | Video Link Grabber             |       [Info](video-link-grabber/)       |             [Install](../../raw/master/video-link-grabber/video-link-grabber.user.js)             |
 | Bandcamp Discography Link       |    [Info](bandcamp-discography-link/)   |        [Install](../../raw/master/bandcamp-discography-link/bandcamp-discography-link.user.js)     |
 | GitHub Unsplit PR Title        |     [Info](github-unsplit-pr-title/)    |         [Install](../../raw/master/github-unsplit-pr-title/github-unsplit-pr-title.user.js)          |
+| Fastmail Remap Keys            |     [Info](fastmail-remap-keys/)        |             [Install](../../raw/master/fastmail-remap-keys/fastmail-remap-keys.user.js)             |
