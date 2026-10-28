@@ -18,7 +18,9 @@
      */
     const MAP = {
         'a': ['*', 'a'],   // select all (Fastmail: * then a). Replaces reply-all.
-        '[': ['`'],
+        '[': ['`'], // toggle left sidebar with [
+        ']': ['Ctrl-I'], // toggle right sidebar with ]
+        'e': ['y'], // Archive
         // The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
         'g i': () => goTo('/mail/Inbox/'),
         '1': () => goTo('/mail/Inbox/'),
