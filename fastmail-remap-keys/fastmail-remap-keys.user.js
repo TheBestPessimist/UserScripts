@@ -14,11 +14,24 @@
     /**
      * What you press -> what Fastmail receives.
      * Left side: space-separated sequence of keys, using `event.key` names ("a", "G" = Shift+g, "*", "Enter") with optional "Ctrl-", "Alt-", "Meta-" prefixes.
-     * Right side: Fastmail keys to replay, same naming.
+     * Right side: Fastmail keys to replay, or a function to run instead.
      */
     const MAP = {
         'a': ['*', 'a'],   // select all (Fastmail: * then a). Replaces reply-all.
-        'g i': ['G', 'i'],  // Shift+g then i. The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
+        // The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
+        'g i': () => goTo('/mail/Inbox/'),
+        'g y': () => goTo('/mail/Youtube'),
+        'g c': () => goTo('/calendar'),
+        'g a': () => goTo('/mail/Archive'),
+    };
+
+    /**
+     * Opens a Fastmail URL without reloading the page: Fastmail's router listens to `popstate` and routes to the current `location.href`.
+     * The query string is dropped: Fastmail keeps its global parameters (user id, act-as account...) in memory and adds them back to the URL after routing.
+     */
+    const goTo = (path) => {
+        history.pushState(null, '', path);
+        window.dispatchEvent(new PopStateEvent('popstate'));
     };
     const SEQUENCE_TIMEOUT_MS = 1000;
     const REPLAY_GAP_MS = 30;
@@ -48,6 +61,7 @@
 
     // Fastmail opens some menus asynchronously, so the second key of a prefix sequence needs a short gap.
     const play = async (keys) => {
+        if (typeof keys === 'function') return keys();
         for (const [i, k] of keys.entries()) {
             if (i > 0) await new Promise((r) => setTimeout(r, REPLAY_GAP_MS));
             send(k);
