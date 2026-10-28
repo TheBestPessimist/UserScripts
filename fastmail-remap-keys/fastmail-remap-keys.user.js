@@ -24,18 +24,25 @@
         // The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
         'g i': () => goTo('/mail/Inbox/'),
         '1': () => goTo('/mail/Inbox/'),
-        'g y': () => goTo('/mail/Youtube'),
-        '2': () => goTo('/mail/Youtube'),
-        'g c': () => goTo('/calendar'),
-        'g a': () => goTo('/mail/Archive'),
+        'g y': () => goTo('/mail/Youtube/'),
+        '2': () => goTo('/mail/Youtube/'),
+        'g c': () => goTo('/calendar/'),
+        'g a': () => goTo('/mail/Archive/'),
     };
 
     /**
      * Opens a Fastmail URL without reloading the page: Fastmail's router listens to `popstate` and routes to the current `location.href`.
      * The query string is dropped: Fastmail keeps its global parameters (user id, act-as account...) in memory and adds them back to the URL after routing.
+     *
+     * In order not to have 2 entries in the browser history and force the user (me) to press back twice, we make this hack where we replace `history.pushState` --the one that fastmail uses to add all the global params-- with a `history.replaceState` for 1 single call that supposedly fastmail will do.
      */
     const goTo = (path) => {
+        if (location.pathname === path) return;
         history.pushState(null, '', path);
+        // Fastmail adds its global parameters back with its own pushState. Turn that one call into replaceState, so Back needs 1 press instead of 2.
+        const restore = () => { delete history.pushState; clearTimeout(timer); };
+        const timer = setTimeout(restore, 1000);
+        history.pushState = (...args) => { restore(); history.replaceState(...args); };
         window.dispatchEvent(new PopStateEvent('popstate'));
     };
     const SEQUENCE_TIMEOUT_MS = 1000;
