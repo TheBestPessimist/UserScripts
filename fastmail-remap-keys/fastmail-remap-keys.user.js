@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name            Fastmail Remap Keys
 // @description     Remap Fastmail keyboard shortcuts
-// @version         3
+// @version         4
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           https://app.fastmail.com/*
+// @match           https://app.beta.fastmail.com/*
 // @run-at          document-start
 // @grant           none
 // @downloadURL     https://github.com/TheBestPessimist/UserScripts/raw/master/fastmail-remap-keys/fastmail-remap-keys.user.js
