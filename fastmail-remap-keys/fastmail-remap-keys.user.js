@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Fastmail Remap Keys
 // @description     Remap Fastmail keyboard shortcuts
-// @version         2
+// @version         3
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           https://app.fastmail.com/*
@@ -18,6 +18,7 @@
      */
     const MAP = {
         'a': ['*', 'a'],   // select all (Fastmail: * then a). Replaces reply-all.
+        'd': ['#'],   // Delete. Fastmail supports this already with key `d`, but the shortcut does not work for Drafts or Spam. If i use `#`, it works as delete `¯\_(ツ)_/¯`
         '[': ['`'], // toggle left sidebar with [
         ']': ['Ctrl-I'], // toggle right sidebar with ]
         'e': ['y'], // Archive
