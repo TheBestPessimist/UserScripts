@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Fastmail Remap Keys
 // @description     Remap Fastmail keyboard shortcuts
-// @version         4
+// @version         5
 // @author          TheBestPessimist
 // @namespace       https://git.tbp.land/
 // @match           https://app.fastmail.com/*
@@ -25,11 +25,12 @@
         'e': ['y'], // Archive
         // The g prefix delays Fastmail's own `g` (go to folder) until the timeout or the next key.
         'g i': () => goTo('/mail/Inbox/'),
-        '1': () => goTo('/mail/Inbox/'),
-        'g y': () => goTo('/mail/Youtube/'),
-        '2': () => goTo('/mail/Youtube/'),
         'g c': () => goTo('/calendar/'),
         'g a': () => goTo('/mail/Archive/'),
+
+        '1': () => goTo('/mail/Inbox/'),
+        '2': () => goTo('/mail/Youtube/'),
+        '3': () => goTo('/calendar/'),
     };
 
     /**
